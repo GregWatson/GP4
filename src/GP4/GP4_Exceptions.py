@@ -3,6 +3,6 @@
 import exceptions
 
 class SyntaxError(exceptions.Exception):
-    def __init__(self, args = None):
+    def __init__(self, args = []):
         self.args = args
 

@@ -7,8 +7,8 @@
 import sys, unittest
 sys.path.append("/home/gwatson/Work/GP4/src")
 try:
-    from GP4.GP4_PyParse import *
-    import GP4.GP4_Compile
+    from GP4.GP4_CompilerHelp import compile_string
+    import GP4.GP4_Exceptions
 except ImportError, err:
     print "Unable to load GP4 libs. sys.path is:"
     for p in sys.path: print "\t",p
@@ -21,18 +21,12 @@ except ImportError, err:
 def simple_test(program, debug=0):
     ''' Given a string (GP4 program) in program, compile and run it.
     '''
-    gbl = GP4.GP4_Compile.compile_string_as_string(
-            program=program, 
-          )
+    p4 = compile_string( program=program )
 
-    if not gbl:
+    if not p4:
         print "Hmmm. Syntax error?"
-        sys.exit(1)
 
-    # run sim
-
-    gbl.run_sim(debug)
-    return gbl
+    return p4
 
     
 class test_dev(unittest.TestCase):
@@ -44,6 +38,7 @@ class test_dev(unittest.TestCase):
     def test1(self, debug=1):
 
         data = """
+
 header vlan_tag {
     fields {
         pcp : 3 signed, saturating;
@@ -54,8 +49,27 @@ header vlan_tag {
     length (2+1) ; 
     max_length 33;
 }
+
+header hdr2 {fields { a : 8 ; } }
+
+vlan_tag metadata vlan_instance;
+vlan_tag vlan_instance [ 5 ]; 
+
 """
-        gbl = simple_test(data, debug=debug)
+        p4 = simple_test(data, debug=debug)
+
+
+    """ Test syntax error handling """
+    def test2(self, debug=1):
+
+        data = """ header vlan_tag { }"""
+        try:
+            p4 = simple_test(data, debug=debug)
+        except GP4.GP4_Exceptions.SyntaxError,err:
+            print "Syntax Error was expected"
+
+
+
 
 
 if __name__ == '__main__':

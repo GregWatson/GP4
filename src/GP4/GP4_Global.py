@@ -1,6 +1,9 @@
 # Global object
 # used in parsing and run time (simulation)
 
+FILE NO LONGER USED
+
+
 import GP4_Exceptions
 import datetime, sys
 

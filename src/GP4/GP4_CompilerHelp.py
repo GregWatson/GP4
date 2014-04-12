@@ -2,39 +2,44 @@
 #
 ## @package GP4
 
+import GP4_Compile, GP4_PyParse
+from GP4_Utilities import *
+from pyparsing import ParseException
+import GP4_Exceptions
 
-## print the surrounding text where the syntax error occurred.
-# @param string : String.  Source text
-# @param loc    : Integer. location in text of this object
-# @return None
-def show_source_loc(string, loc):
-    text_lines = string.split('\n')
-    line_num = 0
-    char_count = 0
-    last_line  = None
-    print_next_line  = False
-    for line in text_lines:
-        line_num += 1
-        if print_next_line:
-            print "%3d: %s" % (line_num, line)
-            break    
-        if ( char_count + len(line) ) >= loc:
-            if last_line: print "%3d: %s" % (line_num-1, last_line)
-            print "%3d: %s" % (line_num, line)
-            print "      " + " "*(loc-char_count-1) + "^"
-            print_next_line  = True
-        else: 
-            last_line = line
-            char_count +=  len(line)
+## Compile a GP4 program given as a single string.
+# @param program : string. The GP4 program
+# @param debug : debug vector integer
+# @return p4 object or None if error
+def compile_string(program, debug=0, ):
+    ''' Creates a new parser and compiler object.
+        Runs the parser on the given program, and then
+        runs the compiler on the generated AST, 
+        returning a P4 object that contains the 
+        specified P4 program.
+    '''
 
-    return None
+    if debug:
+        print program
 
-## print a syntax error message
-# @param err_msg : String.  The error string
-# @param string : String.  Source text
-# @param loc    : Integer. location in text of this object
-# @return None
-def print_syntax_err(err_msg, string, loc):
-    print "Syntax Error:",err_msg
-    show_source_loc(string, loc)
+    parser = GP4_PyParse.new_GP4_parser()
+
+    try:
+        parsed_data = parser.parseString(program, True)
+
+    except ParseException, err:
+
+        show_source_loc(err.line, err.column)
+        print err
+        raise GP4_Exceptions.SyntaxError(err)
+
+    # Compile the parse tree
+
+    compiler = GP4_Compile.Compiler( )
+    p4 = compiler.compile_parse_tree( parsed_data )
+
+    return p4
+
+
+
 

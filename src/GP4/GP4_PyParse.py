@@ -3,53 +3,8 @@
 ## @package GP4
 
 from pyparsing import *
-import GP4_Header_Declaration
-import GP4_Field_Declaration
-from GP4_CompilerHelp import *
-
-
-
-
-## construct a field modifier list (check valid)
-# @param string : String.  Source text
-# @param loc    : Integer. location in text of this object
-# @param string : Tokens.  List of tokens representing this object.
-# @return new token containing the constructed object.
-def do_field_mod_list(string, loc, toks):
-    # print "field_mod_list:",toks[0]
-    mods = toks[0]
-    seen = []
-    for m in mods:
-        if m in seen:
-            print_syntax_err('field modifier "%s" seen twice.' % m, string, loc)
-        seen.append(m)
-    return toks[0]
-
-
-
-## construct a header_declaration object
-# @param string : String.  Source text
-# @param loc    : Integer. location in text of this object
-# @param string : Tokens.  List of tokens representing this object.
-# @return new token containing the constructed object.
-def do_header_declaration(string, loc, toks):
-    print "hdr_decl:", toks
-    assert len(toks)==1
-    hdr = toks[0]
-    assert len(hdr)==2  # name and  header_dec_body
-    return GP4_Header_Declaration.Header_Declaration( string, loc, hdr_name = hdr[0], hdr_body = hdr[1] )
-
-## construct a field_declaration object
-# @param string : String.  Source text
-# @param loc    : Integer. location in text of this object
-# @param string : Tokens.  List of tokens representing this object.
-# @return new token containing the constructed object.
-def do_field_declaration(string, loc, toks):
-    # print "field_decl:", toks
-    assert len(toks)==1
-    fld = toks[0]
-    assert len(fld)>1  # name , bit_width, { optional list_of_modifiers }
-    return GP4_Field_Declaration.Field_Declaration( string, loc, fld_name = fld[0], fld_width = fld[1], fld_mods=fld[2:] )
+from GP4_PyParse_Actions import *
+import sys
 
 
 
@@ -60,6 +15,8 @@ def new_GP4_parser() :
     LPAREN, RPAREN, LBRACK, RBRACK, LBRACE, RBRACE = map(Suppress, '()[]{}')
     SEMICOLON, COLON =  map(Suppress, ';:')
     
+    # --- Header declaration ----------------------------
+
     field_name       = Word(alphas,alphanums+'_')
     header_type_name = Word(alphas,alphanums+'_')
     value            = Word(nums)
@@ -107,14 +64,43 @@ def new_GP4_parser() :
     field_mod_list.setParseAction( do_field_mod_list )
 
 
+    # --- Header Instantiation ---------------------------
 
-    parser = OneOrMore(header_declaration)
+    instance_name      = Word(alphas,alphanums+'_')
+    max_instance_value = Word(nums)
+
+    scalar_instance    = Group (   header_type_name 
+                                 + Optional(Literal('metadata'))
+                                 + instance_name 
+                                 + SEMICOLON
+                                )
+
+    array_instance   =  Group (   header_type_name 
+                                + instance_name 
+                                + LBRACK + max_instance_value + RBRACK 
+                                + SEMICOLON
+                              )
+
+    instance_declaration = ( scalar_instance | array_instance )
+
+    # array_instance.setParseAction( lambda t: sys.stdout.write("parsed array_instance\n") )
+    instance_declaration.setParseAction( do_instance_declaration )
+
+    # --- P4 definition ------------------------------------
+
+    p4_declaration = (   header_declaration 
+                       | instance_declaration 
+                       # | parser_function 
+                       # | action_function 
+                       # | table_declaration 
+                       # | control_function
+                     )
+
+    parser = OneOrMore(p4_declaration)
     parser.ignore(cStyleComment)
 
     # parser.validate( ) # check recursive or not
-    # parser.setDebug( )
-    #length_exp.validate( )
-    #length_exp.setDebug( )
+    # parser.setDebug( ) # print debug info while parsing source text
 
     return parser
 

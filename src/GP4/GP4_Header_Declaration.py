@@ -2,9 +2,10 @@
 #
 ## @package GP4
 
-from GP4_CompilerHelp import print_syntax_err
+from GP4_Utilities  import print_syntax_err
+from GP4_AST_object import AST_object
 
-class Header_Declaration(object):
+class Header_Declaration(AST_object):
 
     ## Construct new Header_Declaration object.
     # @param self : object
@@ -13,13 +14,15 @@ class Header_Declaration(object):
     # @param hdr_name : String. Name of the header declaration .e.g ip
     # @param hdr_body : 
     # @parblock
-    #           List of 1,2, or 3 object. 1st is [ field_dec ]. 
+    #           List of 1,2, or 3 object. 1st is [ field_dec objects ]. 
     #           Others are 'length' or 'max_length'
     # @endparblock
     # @returns self
     def __init__(self, string, loc, hdr_name , hdr_body ):
 
         assert len(hdr_body)>0 and len(hdr_body)<4
+        
+        super(Header_Declaration, self).__init__(string, loc, 'header_declaration')
 
         self.name        = hdr_name
         self.fields      = hdr_body[0]  # must be present
@@ -56,7 +59,7 @@ class Header_Declaration(object):
 
         if len(hdr_body)>1:
             for opt in hdr_body[1:]: 
-                print "  opt:", opt
+                # print "  opt:", opt
                 assert len(opt)>1  # [0]=opt name, [1] = value
                 opt_name = opt[0]
                 if opt_name == 'length':
@@ -69,10 +72,6 @@ class Header_Declaration(object):
                  print_syntax_err('In header "%s" a field has width "*" so "length" must be defined.' %
                                      self.name, string, loc)
                 
-        
-        print self
-
-
 
     def __str__(self):
         s = self.name + ' {\n'

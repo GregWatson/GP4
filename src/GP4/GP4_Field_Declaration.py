@@ -1,7 +1,8 @@
 # Field Declaration Object
 
+from GP4_AST_object import AST_object
 
-class Field_Declaration(object):
+class Field_Declaration(AST_object):
 
     ## Construct new Field_Declaration object.
     # @param self : object
@@ -13,10 +14,12 @@ class Field_Declaration(object):
     # @returns self
     def __init__(self, string, loc, fld_name , fld_width, fld_mods ):
 
-        self.name = fld_name
+        super(Field_Declaration, self).__init__(string, loc, 'field_declaration')
+
+        self.name      = fld_name
         self.bit_width = fld_width
         self.modifiers = fld_mods
-        print self
+        # print self
 
     def __str__(self):
         s = self.name + ':' + str(self.bit_width) 
