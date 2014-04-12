@@ -19,8 +19,6 @@ class Header_Declaration(object):
     # @returns self
     def __init__(self, string, loc, hdr_name , hdr_body ):
 
-        print "Constructing header",hdr_name
-
         assert len(hdr_body)>0 and len(hdr_body)<4
 
         self.name        = hdr_name
@@ -30,6 +28,7 @@ class Header_Declaration(object):
         self.max_length  = 0
         
         hdr_len_undefined = False   # set if we see field with bit_width '*'   (0)
+        bit_count = 0
         for f in self.fields:
             if f.name in self.field_names:
                 print_syntax_err('Field name "%s" already defined in header "%s"' %
@@ -42,8 +41,16 @@ class Header_Declaration(object):
                 
                 hdr_len_undefined = True 
 
+            bit_count += f.bit_width
 
             self.field_names.append(f.name)
+
+        if ( bit_count % 8 ) != 0:
+            if not hdr_len_undefined:
+                print_syntax_err('In header "%s" total field bit_width not byte aligned: %d bits.' %
+                                     (self.name, bit_count), string, loc)
+
+
 
         # Process options
 
@@ -63,4 +70,16 @@ class Header_Declaration(object):
                                      self.name, string, loc)
                 
         
+        print self
 
+
+
+    def __str__(self):
+        s = self.name + ' {\n'
+        for f in self.fields: s += '\t' + str(f) + '\n'
+        if self.length_expr:
+            s += "length = " + str(self.length_expr) + '\n'
+        if self.max_length:
+            s += "max_length = %d\n" % self.max_length
+        s += '}'
+        return s

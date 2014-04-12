@@ -49,7 +49,7 @@ header vlan_tag {
         pcp : 3 signed, saturating;
         vid : 12;
         ethertype : 16; 
-        vid2 : *;
+        vid2 : 9;
     }
     length (2+1) ; 
     max_length 33;
