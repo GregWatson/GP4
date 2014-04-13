@@ -34,6 +34,20 @@ class Header_Stack(Header_Instance):
         self.stack          = [ ] # [ Header_Instance objects ]
         self.stack_depth    = 0   # number of instances created in stack[]
 
+    ## Return the specified (indexed) instance.
+    # @param self : object
+    # @param index : number or string 'next'
+    # @return actual header instance. Create it if needed.  None if error
+    def get_indexed_instance(self, index):
+        """ index may be a number or 'next'.
+            Create instance if it does not exist.
+        """
+        assert false, "get_indexed_instance not implemented"
+        # fixme
+
+
+
+
     def __str__(self):
         s = self.hdr_type_name + ' ' + self.hdr_inst_name
         s += ' [metadata]' if self.hdr_is_metadata else ''

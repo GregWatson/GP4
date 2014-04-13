@@ -29,6 +29,6 @@ def parse_packet(p4, pkt, init_state):
         if not parse_func:
             return ('Parse function (state) "%s" not found' % state, bytes_used)
 
-        parse_func.execute( p4, bits)
+        (err, bytes_used, state) = parse_func.execute( p4, bits)
 
     return (err, bytes_used)

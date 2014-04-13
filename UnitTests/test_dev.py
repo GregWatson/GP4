@@ -133,7 +133,7 @@ parser start  { extract ( L2_hdr ) ;
         pkt = [ i for i in range(20) ]
         (err, num_bytes_used ) = parse_and_run_test(program, pkt, init_state='start', debug=debug)
 
-        self.assert_( err==None, 'Saw parse runtime err:' + str(err) )
+        self.assert_( err=='', 'Saw parse runtime err:' + str(err) )
         self.assert_( num_bytes_used == 12, 'Expected 12 bytes consumed, Saw %d.' % num_bytes_used )
 
 

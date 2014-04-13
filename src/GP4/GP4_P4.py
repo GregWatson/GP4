@@ -66,6 +66,47 @@ class P4(object):
         return self.parser_functions.get(func_name)
 
 
+    ## Returns the actual named header instance (or stack) or None
+    # @param self : P4 object
+    # @param hdr_name : name of the hdr instance
+    # @param index    : either '' if hdr is scalar or, if stack, stack index number or 'next'
+    # @returns header_inst or header_stack object (or None)
+    def get_hdr_inst(self, hdr_name, index):
+        if not index:
+            return self.header_insts.get(hdr_name)  # scalar
+        else:
+            # stack
+            stack = self.header_insts.get(hdr_name)
+            if not stack: return None
+            if stack.typ != 'header_stack':
+                print 'Header inst "%s" is not a stack.' % hdr_name
+                return None
+            return stack.get_indexed_instance(index)
+
+
+    ## Returns bool as to whether the hdr inst was declared in source.
+    # @param self : P4 object
+    # @param hdr_name : name of the hdr instance
+    # @returns True if hdr was declared
+    def hdr_inst_defined(self, hdr_name):
+        return hdr_name in self.header_insts
+
+
+    ## Extracts the fields for the specified header from the given Bits object
+    # @param self : P4 object
+    # @param hdr  : hdr instance
+    # @param bits : Bits object
+    # @returns (err, bytes_used, state). state is just ''
+    def extract(self, hdr, bits):
+        print "extract bits to hdr",hdr.hdr_inst_name
+        err = ''
+        bytes_used = 0
+        return (err, bytes_used, '')
+
+
+
+
+
 
     ## Create printable string for Global object
     # @param self : Global object
