@@ -35,6 +35,7 @@ class test_dev(unittest.TestCase):
     def tearDown(self):pass
     
 
+    """ Test header decl and header insts  -----------------------------------------"""
     def test1(self, debug=1):
 
         data = """
@@ -53,20 +54,38 @@ header vlan_tag {
 header hdr2 {fields { a : 8 ; } }
 
 vlan_tag metadata vlan_instance;
-vlan_tag vlan_instance [ 5 ]; 
+vlan_tag vlan_instance_stack [ 5 ]; 
 
 """
         p4 = simple_test(data, debug=debug)
 
 
-    """ Test syntax error handling """
-    def test2(self, debug=1):
+    """ Test syntax error handling ---------------------------------------------------"""
+    def test2(self, debug=1): 
 
         data = """ header vlan_tag { }"""
         try:
             p4 = simple_test(data, debug=debug)
         except GP4.GP4_Exceptions.SyntaxError,err:
             print "Syntax Error was expected"
+
+
+    """ Test parser funcs ------------------------------------------------------------"""
+    def test3(self, debug=1):
+
+        data = """
+parser we_are_done { return P4_PARSING_DONE ; }
+parser nxt_is_done { return we_are_done ; }
+parser prsr_switch { return switch ( L2.DA ) { 1 : nxt_state ; } }
+/* 
+parser prsr_switch { return switch ( L2.DA, L2.SA ) { 
+                        12 : nxt_is_done; 
+                        5, 9 : five_or_nine;
+                        800 mask 22 : masked_state; 
+                     } }
+*/
+"""
+        p4 = simple_test(data, debug=debug)
 
 
 
@@ -78,5 +97,5 @@ if __name__ == '__main__':
     #        python -m unittest discover
 
     single = unittest.TestSuite()
-    single.addTest( test_dev('test1' ))
+    single.addTest( test_dev('test3' ))
     unittest.TextTestRunner().run(single)
