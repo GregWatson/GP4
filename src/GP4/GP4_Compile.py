@@ -20,7 +20,7 @@ class Compiler(object):
     # @return p4 object or None if error
     def compile_parse_tree(self, parse_tree):
 
-        print "parse tree is ", parse_tree
+        # print "parse tree is ", parse_tree
         p4 = GP4_P4.P4()
 
         for ast_obj in parse_tree:

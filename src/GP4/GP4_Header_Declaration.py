@@ -25,12 +25,12 @@ class Header_Declaration(AST_object):
         super(Header_Declaration, self).__init__(string, loc, 'header_declaration')
 
         self.name        = hdr_name
-        self.fields      = hdr_body[0]  # must be present
-        self.field_names = []
-        self.length_expr = None
-        self.max_length  = 0
+        self.fields      = hdr_body[0]  # [ Field objects ]
+        self.field_names = []           # ordered list of field names
+        self.length_expr = None         # list of strings. expression to calc length.
+        self.max_length  = 0            # Integer. max length for header
         
-        hdr_len_undefined = False   # set if we see field with bit_width '*'   (0)
+        hdr_len_undefined = False       # True if we see a field with bit_width '*'   (0)
         bit_count = 0
         for f in self.fields:
             if f.name in self.field_names:

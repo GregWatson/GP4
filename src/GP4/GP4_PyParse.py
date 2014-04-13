@@ -160,6 +160,8 @@ def new_GP4_parser() :
     return_stmt_prsr_st_name.setParseAction(lambda t: t[0].insert(0,'return_prsr_state') )
     return_stmt_switch.setParseAction      (lambda t: t[0].insert(0,'return_switch') )
 
+    parser_function.setParseAction ( do_parser_function )
+
     # --- P4 definition ------------------------------------
 
     p4_declaration = (   header_declaration 

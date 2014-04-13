@@ -1,4 +1,4 @@
-# Header Instance Object
+# GP4_Header_Instance.py Header Instance Object
 #
 ## @package GP4
 
@@ -11,27 +11,24 @@ class Header_Instance(AST_object):
     # @param self : object
     # @param string : String.  Source text
     # @param loc    : Integer. location in text of this object
-    # @param hdr_type_name : String. Name of the header decl that this is an instance of.
+    # @param hdr_type_name   : String. Name of the header decl that this is an instance of.
     # @param hdr_is_metadata : Bool 
-    # @param hdr_inst_name : String. Name of this instance.
-    # @param hdr_is_array : Bool.  If array then hdr_max_inst_val is valid
-    # @param hdr_max_inst_val : Integer.  Maximum number of instances in array (stack)
+    # @param hdr_inst_name   : String. Name of this instance.
     # @returns self
     def __init__(self, string, loc, 
-                hdr_type_name, hdr_is_metadata, hdr_inst_name, hdr_is_array, hdr_max_inst_val=1):
+                hdr_type_name, hdr_is_metadata, hdr_inst_name):
         
         super(Header_Instance, self).__init__(string, loc, 'header_instance')
 
-        self.hdr_type_name    = hdr_type_name
-        self.hdr_is_metadata  = hdr_is_metadata
-        self.hdr_inst_name    = hdr_inst_name
-        self.hdr_is_array     = hdr_is_array
-        self.hdr_max_inst_val = hdr_max_inst_val
+        self.hdr_type_name    = hdr_type_name    # name of hdr decl that this instantiates
+        self.hdr_is_metadata  = hdr_is_metadata  # Bool.
+        self.hdr_inst_name    = hdr_inst_name    # name of this instance
+
+        self.is_valid = False   # Bool. Set when actually created (extracted)
 
 
 
     def __str__(self):
         s = self.hdr_type_name + ' ' + self.hdr_inst_name
         s += ' [metadata]' if self.hdr_is_metadata else ''
-        s += ' [1..' + str(self.hdr_max_inst_val) + ']' if  self.hdr_is_array else ''
         return s

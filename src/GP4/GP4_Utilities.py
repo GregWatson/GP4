@@ -39,3 +39,24 @@ def print_syntax_err(err_msg, string='', loc=0):
     print "Syntax Error:",err_msg
     if string: show_source_loc(string, loc)
     raise GP4_Exceptions.SyntaxError('')
+
+
+# Bits class. Behaves as an ordered sequence of bits.
+
+class Bits(object):
+
+    ## Create new Bits object
+    # @param self: the new Bits object
+    # @param bytes : [ integers ]
+    def __init__(self, bytes):
+        self.bytes = bytes[:]
+        self.bits_left  = 8  # bits left in first byte.
+
+    ## Return string of first few bytes as hex str
+    # @param self: the new Bits object
+    def first_few_bytes_as_hex_str(self):
+        stop = 6 if len(self.bytes)>6 else -1
+        hexL = [ "0x%02x" % b for b in self.bytes[0:stop] ]
+        s = ' '.join(hexL)
+        if len(self.bytes)>6: s+= '... (%d more)' % (len(self.bytes) - 6)
+        return s

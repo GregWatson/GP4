@@ -3,8 +3,11 @@
 ## @package GP4
 
 import GP4_Header_Declaration
-import GP4_Field_Declaration
+import GP4_Field
 import GP4_Header_Instance
+import GP4_Header_Stack
+import GP4_Parser_Function
+
 from GP4_Utilities import *
 import sys
 
@@ -49,18 +52,18 @@ def do_field_declaration(string, loc, toks):
     assert len(toks)==1
     fld = toks[0]
     assert len(fld)>1  # name , bit_width, { optional list_of_modifiers }
-    return [ GP4_Field_Declaration.Field_Declaration( 
+    return [ GP4_Field.Field( 
                 string, loc, 
                 fld_name = fld[0], fld_width = fld[1], fld_mods=fld[2:] ) ]
 
 
-## construct a instance_declaration object
+## construct a header instance or header stack object
 # @param string : String.  Source text
 # @param loc    : Integer. location in text of this object
 # @param string : Tokens.  List of tokens representing this object.
 # @return new token containing the constructed object.
 def do_instance_declaration(string, loc, toks):
-    print "inst_decl:", toks
+    # print "inst_decl:", toks
     assert len(toks)==1,"do_instance_declaration: expected one token"
     inst = toks[0]
     assert len(inst)>1 and len(inst)<4,"do_instance_declaration: unexepcted tokens: %s" % str(toks)
@@ -77,13 +80,35 @@ def do_instance_declaration(string, loc, toks):
         if len(inst)==3:  # must be array
             is_array = True
             max_inst_val = int(inst[2])
-
-    return [ GP4_Header_Instance.Header_Instance( 
+    if is_array: 
+        return [ GP4_Header_Stack.Header_Stack( 
             string, loc, 
             hdr_type_name    = type_name,
             hdr_is_metadata  = is_metadata,
             hdr_inst_name    = inst_name,
-            hdr_is_array     = is_array,
             hdr_max_inst_val = max_inst_val) ]
 
+    else:
+        return [ GP4_Header_Instance.Header_Instance( 
+            string, loc, 
+            hdr_type_name    = type_name,
+            hdr_is_metadata  = is_metadata,
+            hdr_inst_name    = inst_name ) ]
+
+
     
+## construct a Parser Function object
+# @param string : String.  Source text
+# @param loc    : Integer. location in text of this object
+# @param string : Tokens.  List of tokens representing this object.
+# @return new token containing the constructed object.
+def do_parser_function(string, loc, toks):
+    print "parser_function:", toks
+    assert len(toks)==1
+    fun = toks[0]
+    assert len(fun)==2  # name , body
+    name      = fun[0]
+    func_body = fun[1]
+    return [ GP4_Parser_Function.Parser_Function(
+                string, loc, name, func_body 
+            ) ]
