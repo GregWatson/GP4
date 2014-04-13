@@ -74,16 +74,22 @@ vlan_tag vlan_instance_stack [ 5 ];
     def test3(self, debug=1):
 
         data = """
-parser we_are_done { return P4_PARSING_DONE ; }
-parser nxt_is_done { return we_are_done ; }
-parser prsr_switch { return switch ( L2.DA ) { 1 : nxt_state ; } }
-/* 
-parser prsr_switch { return switch ( L2.DA, L2.SA ) { 
+parser we_are_done  { return P4_PARSING_DONE ; }
+parser nxt_is_done  { return we_are_done ; }
+parser prsr_switch  { return switch ( L2.DA ) { 1 : nxt_state ; } } 
+parser prsr_switch2 { return switch ( L2.DA, L2.SA ) { 
                         12 : nxt_is_done; 
                         5, 9 : five_or_nine;
-                        800 mask 22 : masked_state; 
+                        800 mask 22,99  : masked_state;
+                        default : def_state;
                      } }
-*/
+parser do_stuff { extract ( L2_hdr ) ;
+                  extract ( vlan_id[3] );
+                  extract ( ip_hdr[next] ); 
+                  set_metadata ( hdr.f1, 666 );
+                  return P4_PARSING_DONE ; 
+                }
+
 """
         p4 = simple_test(data, debug=debug)
 

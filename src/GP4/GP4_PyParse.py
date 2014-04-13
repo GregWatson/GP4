@@ -109,7 +109,7 @@ def new_GP4_parser() :
 
     switch_exp = Group ( delimitedList( switch_field_ref ) )
 
-    value_or_masked = Group ( value | ( value + Suppress('mask') + mask_value ) )
+    value_or_masked = Group ( ( value + Suppress('mask') + mask_value ) | value )
 
     value_list = Group ( delimitedList( value_or_masked ) | Literal('default') )
 
@@ -138,8 +138,8 @@ def new_GP4_parser() :
 
     header_extract_index = ( value | Literal('next') )
 
-    header_extract_ref = (   instance_name 
-                           | ( instance_name + LBRACK + header_extract_index + RBRACK )
+    header_extract_ref = (   ( instance_name + LBRACK + header_extract_index + RBRACK )
+                           | instance_name 
                          )
 
     extract_statement = Group (   Literal('extract') 
