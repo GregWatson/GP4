@@ -28,6 +28,7 @@ class Field(AST_object):
         self.value    = None   # Integer
         self.valid_bits = 0    # number of bits when is_valid
 
+
     def __str__(self):
         s = self.name + ':' + str(self.bit_width) 
         if len(self.modifiers):

@@ -4,6 +4,7 @@
 
 from GP4_Utilities  import print_syntax_err
 from GP4_AST_object import AST_object
+import copy
 
 class Header_Declaration(AST_object):
 
@@ -71,7 +72,14 @@ class Header_Declaration(AST_object):
             if not  self.length_expr:
                  print_syntax_err('In header "%s" a field has width "*" so "length" must be defined.' %
                                      self.name, string, loc)
-                
+
+    ## Copy the actual field objects and return list of them
+    # @param self : object
+    # @returns new ordered list of field objects
+    def copy_fields():
+        return [ copy.deepcopy(f) for f in self.fields ]
+
+
 
     def __str__(self):
         s = self.name + ' {\n'

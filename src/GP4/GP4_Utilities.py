@@ -3,6 +3,7 @@
 ## @package GP4
 
 import GP4_Exceptions
+import sys
 
 ## print the surrounding text where the syntax error occurred.
 # @param string : String.  Source text
@@ -51,6 +52,42 @@ class Bits(object):
     def __init__(self, bytes):
         self.bytes = bytes[:]
         self.bits_left  = 8  # bits left in first byte.
+
+    ## Extract num_to_get bits from the bytes array and return as integer.
+    # @param self: Bits object
+    # @param num_to_get : integer
+    # @return (err, extracted_bits) err=string,  extracted_bits=integer
+    def get_next_bits(num_to_get):
+        if num_to_get == 0:
+            return ('Bits:get_next_bits: number ot get is zero!',0)
+
+        if len(self.bytes) == 0
+            return ('Bits:get_next_bits: no bytes left!',0)
+
+        total_remaining_bits = self.bits_left + 8*(len(self.bytes)-1)
+        if num_to_get > total_remaining_bits:
+            return ('Bits:get_next_bits: needed %d bits but only %d left!'
+                    % (num_to_get,total_remaining_bits) ,0)
+
+        extracted_bits = 0
+
+        while num_to_get >= self.bits_left:
+
+            num_to_get -= self.bits_left
+            extracted_bits = ( extracted_bits << self.bits_left ) + self.pop(self.bits_left)
+
+    ## Extract 1-8 bits from first byte. Remove it if we take all.
+    # @param self: Bits object
+    # @param num_to_get : integer
+    # @return extracted_bits
+    def pop(self, num_to_get):
+        if num_to_get > self.bits_left:
+            print "Bits:pop(): trying to pop",num_to_get,"bits but only",self.bits_left," left."
+            sys.exit(1)
+
+     Greg here
+
+        
 
     ## Return string of first few bytes as hex str
     # @param self: the new Bits object

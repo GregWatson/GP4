@@ -58,6 +58,14 @@ class P4(object):
             print "Internal Error: P4:add_AST_obj  Unknown AST_obj", ast_obj.typ
             sys.exit(1)
 
+    ## Finds the named header_decl object and returns it else None
+    # @param self : P4 object
+    # @param decl_name : name of the hdr_decl object we are looking for
+    # @return header_Decl object or None
+    def get_header_decl(self, decl_name):
+        return self.header_decls.get(decl_name)
+
+
     ## Finds the named parser function and return the corresponding parser_function object or None
     # @param self : P4 object
     # @param func_name : name of the parser function (initial state)
@@ -96,12 +104,23 @@ class P4(object):
     # @param self : P4 object
     # @param hdr  : hdr instance
     # @param bits : Bits object
-    # @returns (err, bytes_used, state). state is just ''
+    # @returns (err, bytes_used, state). return state is just ''
     def extract(self, hdr, bits):
         print "extract bits to hdr",hdr.hdr_inst_name
         err = ''
-        bytes_used = 0
-        return (err, bytes_used, '')
+        bits_used  = 0
+
+        if not hdr.is_valid: 
+            err = hdr.create_fields(self)
+            if err: return(err, bits_used/8, '')
+
+            for f in hdr.fields:
+                num_bits        = f.bit_width
+                err, field_bits = bits.get_next_bits(num_bits)
+
+            hdr.is_valid = True
+
+        return (err, bits_used/8, '')
 
 
 
