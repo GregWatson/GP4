@@ -59,7 +59,7 @@ class Parser_Function(AST_object):
                 ]
 
         for stmt in self.func_body_text: 
-            print "compiling stmt ", stmt
+            # print "compiling stmt ", stmt
             err, code = self.compile_stmt(stmt, p4)
             codeL.append('    (err, bytes_used, state)=' + code)
             codeL.append('    total_bytes += bytes_used')
@@ -69,7 +69,7 @@ class Parser_Function(AST_object):
         codeL.append('    return (err, total_bytes, state)')
 
         text = '\n'.join(codeL)
-        print "compiling code:\n",text
+        print "Compiling code:\n",text
 
         try:
             exec text
@@ -120,7 +120,7 @@ class Parser_Function(AST_object):
         index = "''" if  len(stmt)<3 else stmt[2]
 
         code = 'p4.extract(p4.get_hdr_inst("' + hdr_name + '", ' + index + '), bits)'
-        print code
+        # print code
         return ('', code)
 
 

@@ -124,7 +124,7 @@ header L2_def {
     fields { DA : 48; SA : 48; }
 }
 header L9_def {
-    fields { type : 5; four_bits : 3; }
+    fields { type : 5; three_bits : 3; }
 }
 
 L2_def L2_hdr;
