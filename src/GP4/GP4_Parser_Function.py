@@ -132,11 +132,26 @@ class Parser_Function(AST_object):
     def compile_stmt_return_done(self, stmt, p4):
         """Each statement should return (err, bytes_used, state)
            where bytes_used is bytes used by that statement.
-
-           stmt is ['extract', 'L2_hdr'] or ['extract', 'L2_hdr', index] index= str(num) or 'next' 
         """
         code = '("", 0, "P4_PARSING_DONE")'
         return ('', code)
+
+
+    ## Compile a 'return next_state' statement and return the compiled python text.
+    # @param self : object
+    # @param stmt : PyParsing list of parsed objects.
+    # @param p4   : P4 object
+    # @returns (err, code) 
+    def compile_stmt_return_prsr_state(self, stmt, p4):
+        """Each statement should return (err, bytes_used, state)
+           where bytes_used is bytes used by that statement.
+
+           stmt is ['return_prsr_state', 'DO_L9']
+        """
+        code = '("", 0, "' + stmt[1] + '")'
+        return ('', code)
+
+
 
 
     def __str__(self):

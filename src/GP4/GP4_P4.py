@@ -17,6 +17,9 @@ class P4(object):
         self.parser_functions = {} # maps parser function name (string) to parse function object
 
 
+        # run time fields
+        self.hdr_extraction_order = []  # list of header objects in the order they were extracted.
+
     ## Add a new object (e.g. header_decl) to self.
     # @param self : P4 object
     # @param ast_obj : AST Object from parser
@@ -100,6 +103,14 @@ class P4(object):
         return hdr_name in self.header_insts
 
 
+    ## Prepare the p4 object to parse a new packet.
+    # @param self : P4 object
+    # @returns None
+    def initialize_packet_parser(self):
+        self.hdr_extraction_order = [] 
+
+
+
     ## Extracts the fields for the specified header from the given Bits object
     # @param self : P4 object
     # @param hdr  : hdr instance
@@ -114,11 +125,19 @@ class P4(object):
             err = hdr.create_fields(self)
             if err: return(err, bits_used/8, '')
 
-            for f in hdr.fields:
-                num_bits        = f.bit_width
-                err, field_bits = bits.get_next_bits(num_bits)
+        for f in hdr.fields:
+            num_bits        = f.bit_width
+            assert num_bits > 0,"fixme: variable bit width not implemented"
+            err, field_bits = bits.get_next_bits(num_bits)
+            if err: return(err, bits_used/8, '')
+            f.set_value(field_bits, num_bits)
+            bits_used += num_bits
 
-            hdr.is_valid = True
+        hdr.is_valid = True
+
+        print "extracted",bits_used/8,"bits"
+        print hdr
+        self.hdr_extraction_order.append(hdr)
 
         return (err, bits_used/8, '')
 

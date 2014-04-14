@@ -1,5 +1,8 @@
 # GP4_Packet_Parser.py - runtime packet parser.
 #
+# This will actualy parse a packet and populate the header instances 
+# as determined by the parser functions.
+#
 ## @package GP4
 
 from GP4_Utilities import print_syntax_err
@@ -20,6 +23,7 @@ def parse_packet(p4, pkt, init_state):
     assert len(pkt),"pkt was empty - cannot parse."
 
     state = init_state
+    p4.initialize_packet_parser() 
 
     while state != 'P4_PARSING_DONE':
         
@@ -29,6 +33,14 @@ def parse_packet(p4, pkt, init_state):
         if not parse_func:
             return ('Parse function (state) "%s" not found' % state, bytes_used)
 
-        (err, bytes_used, state) = parse_func.execute( p4, bits)
+        (err, new_bytes_used, state) = parse_func.execute( p4, bits)
+
+        bytes_used += new_bytes_used
+
+
+    print "After parsing, the following headers are defined:"
+    for h in p4.hdr_extraction_order:
+        if h.is_valid:
+            print h
 
     return (err, bytes_used)

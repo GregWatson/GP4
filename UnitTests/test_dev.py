@@ -123,18 +123,25 @@ parser do_stuff { extract ( L2_hdr ) ;
 header L2_def {
     fields { DA : 48; SA : 48; }
 }
+header L9_def {
+    fields { type : 5; four_bits : 3; }
+}
 
 L2_def L2_hdr;
+L9_def L9_hdr;
 
 parser start  { extract ( L2_hdr ) ; 
+                return DO_L9 ;
+              }
+parser DO_L9  { extract ( L9_hdr ) ; 
                 return P4_PARSING_DONE ; 
-}
+              }
 """
         pkt = [ i for i in range(20) ]
         (err, num_bytes_used ) = parse_and_run_test(program, pkt, init_state='start', debug=debug)
 
         self.assert_( err=='', 'Saw parse runtime err:' + str(err) )
-        self.assert_( num_bytes_used == 12, 'Expected 12 bytes consumed, Saw %d.' % num_bytes_used )
+        self.assert_( num_bytes_used == 13, 'Expected 13 bytes consumed, Saw %d.' % num_bytes_used )
 
 
 

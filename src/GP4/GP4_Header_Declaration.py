@@ -76,7 +76,7 @@ class Header_Declaration(AST_object):
     ## Copy the actual field objects and return list of them
     # @param self : object
     # @returns new ordered list of field objects
-    def copy_fields():
+    def copy_fields(self):
         return [ copy.deepcopy(f) for f in self.fields ]
 
 

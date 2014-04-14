@@ -40,9 +40,13 @@ class Header_Instance(AST_object):
 
         self.fields      = decl.copy_fields()
         self.field_names = [ f.name for f in self.fields ]
-
+        self.is_valid    = True
+        return ''
 
     def __str__(self):
         s = self.hdr_type_name + ' ' + self.hdr_inst_name
         s += ' [metadata]' if self.hdr_is_metadata else ''
+        if self.is_valid:
+            s += '\n'
+            for f in self.fields: s += '   ' + str(f) + '\n'
         return s

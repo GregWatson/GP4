@@ -29,8 +29,23 @@ class Field(AST_object):
         self.valid_bits = 0    # number of bits when is_valid
 
 
+    ## Assign a value
+    # @param self  : object
+    # @param value : Integer. New value for this field.
+    # @param num_bits : Integer. Number of bits to associate with value
+    # @returns None
+    def set_value(self, value, num_bits):
+        self.value    = value
+        self.is_valid = True
+        self.valid_bits = num_bits
+
+
+    ## Convert field to a printable string
+    # @param self  : object
+    # @returns String representing field
     def __str__(self):
         s = self.name + ':' + str(self.bit_width) 
+        if self.is_valid: s+= " val=0x%x " % self.value
         if len(self.modifiers):
             s += '('+ ','.join(self.modifiers) + ')'
         return s

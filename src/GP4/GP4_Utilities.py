@@ -46,6 +46,8 @@ def print_syntax_err(err_msg, string='', loc=0):
 
 class Bits(object):
 
+    bits_mask = [ 0, 0x1, 0x3, 0x7, 0xf, 0x1f, 0x3f, 0x7f, 0xff ]
+
     ## Create new Bits object
     # @param self: the new Bits object
     # @param bytes : [ integers ]
@@ -57,11 +59,11 @@ class Bits(object):
     # @param self: Bits object
     # @param num_to_get : integer
     # @return (err, extracted_bits) err=string,  extracted_bits=integer
-    def get_next_bits(num_to_get):
+    def get_next_bits(self, num_to_get):
         if num_to_get == 0:
             return ('Bits:get_next_bits: number ot get is zero!',0)
 
-        if len(self.bytes) == 0
+        if len(self.bytes) == 0:
             return ('Bits:get_next_bits: no bytes left!',0)
 
         total_remaining_bits = self.bits_left + 8*(len(self.bytes)-1)
@@ -73,19 +75,36 @@ class Bits(object):
 
         while num_to_get >= self.bits_left:
 
-            num_to_get -= self.bits_left
-            extracted_bits = ( extracted_bits << self.bits_left ) + self.pop(self.bits_left)
+            num_to_get    -= self.bits_left
+            extracted_bits = ( extracted_bits << self.bits_left ) | self.pop(self.bits_left)
+
+        if num_to_get:
+            assert(num_to_get < 8)
+            extracted_bits = ( extracted_bits << num_to_get ) | self.pop(num_to_get)
+
+        return ('', extracted_bits)
+
 
     ## Extract 1-8 bits from first byte. Remove it if we take all.
     # @param self: Bits object
     # @param num_to_get : integer
     # @return extracted_bits
     def pop(self, num_to_get):
+        """ It's an error to try to pop more bits than are left """
         if num_to_get > self.bits_left:
             print "Bits:pop(): trying to pop",num_to_get,"bits but only",self.bits_left," left."
             sys.exit(1)
 
-     Greg here
+        self.bits_left -= num_to_get
+        extracted_bits = self.bytes[0] >> self.bits_left
+
+        if self.bits_left == 0:
+            del self.bytes[0]
+            if len(self.bytes): self.bits_left = 8
+        else:
+            self.bytes[0] &= Bits.bits_mask[self.bits_left]
+
+        return extracted_bits
 
         
 
