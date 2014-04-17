@@ -18,7 +18,8 @@ class Header_Stack(Header_Instance):
     # @returns self
     def __init__(self, string, loc, 
                 hdr_type_name, hdr_is_metadata, hdr_inst_name, hdr_max_inst_val=1):
-        
+        """ Assume instances start at 0 (innermost) and increment
+        """
         super(Header_Stack, self).__init__(string, loc, 
                                            hdr_type_name, 
                                            hdr_is_metadata, 
@@ -32,18 +33,44 @@ class Header_Stack(Header_Instance):
 
         self.stack_max_size = hdr_max_inst_val # Integer. How many instances can we hold
         self.stack          = [ ] # [ Header_Instance objects ]
-        self.stack_depth    = 0   # number of instances created in stack[]
 
     ## Return the specified (indexed) instance.
     # @param self : object
-    # @param index : number or string 'next'
-    # @return actual header instance. Create it if needed.  None if error
+    # @param index : number or string 'next' or string 'last'
+    # @return actual header instance. Create instance if needed.  None if error
     def get_indexed_instance(self, index):
         """ index may be a number or 'next'.
-            Create instance if it does not exist.
+            Create instance if it does not exist, IF it is the next to be created.
         """
-        assert false, "get_indexed_instance not implemented"
-        # fixme
+        # Create a new header_inst if index is next or else it is a value equal to
+        # the next index to be used in the stack.
+        if index == 'next' or index == len(self.stack):
+            if len(self.stack) == self.stack_max_size:  # full - return None
+                print "Referenced instance",index,"of stack %s but stack is full." % self.hdr_inst_name
+                return None
+            # Create new header instance
+            #print "Creating hdr inst %s[%d]" % (self.hdr_inst_name, len(self.stack))
+            h_i = Header_Instance(  self.string, self.loc,
+                                    self.hdr_type_name,
+                                    self.hdr_is_metadata,
+                                    "%s[%d]" % (self.hdr_inst_name, len(self.stack))
+                                  )
+            self.stack.append(h_i)
+            return h_i
+
+        if index == 'last':
+            if len(self.stack) == 0:
+                print "Referenced 'last' hdr_inst of stack %s but stack is empty." % self.hdr_inst_name
+                return None
+            return self.stack[-1]
+
+        # Get actual numbered entry
+        if index >= len(self.stack):
+            print "Indexed entry %d of stack %s but stack only has %d entries." % (
+                    index, self.hdr_inst_name, len(self.stack) )
+            return None
+        return self.stack[index]
+
 
 
 
@@ -51,6 +78,6 @@ class Header_Stack(Header_Instance):
     def __str__(self):
         s = self.hdr_type_name + ' ' + self.hdr_inst_name
         s += ' [metadata]' if self.hdr_is_metadata else ''
-        s += ' [1..' + str(self.stack_depth) + ']' if self.stack_depth else '[empty]'
+        s += ' [0..' + str(self.stack_depth) + ']' if len(self.stack) else '[empty]'
         s += ' (max=%d)' % self.stack_max_size
         return s

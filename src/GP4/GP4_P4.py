@@ -83,14 +83,17 @@ class P4(object):
     # @param index    : either '' if hdr is scalar or, if stack, stack index number or 'next'
     # @returns header_inst or header_stack object (or None)
     def get_hdr_inst(self, hdr_name, index):
-        if not index:
+        #print "get_hdr_inst:", hdr_name, index
+        if index == '':
             return self.header_insts.get(hdr_name)  # scalar
         else:
             # stack
             stack = self.header_insts.get(hdr_name)
-            if not stack: return None
+            if not stack: 
+                print "Error: stack %s not found." % hdr_name
+                return None
             if stack.typ != 'header_stack':
-                print 'Header inst "%s" is not a stack.' % hdr_name
+                print 'Error: Header inst "%s" is not a stack.' % hdr_name
                 return None
             return stack.get_indexed_instance(index)
 

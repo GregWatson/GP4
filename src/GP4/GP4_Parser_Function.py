@@ -118,7 +118,7 @@ class Parser_Function(AST_object):
             return ('Unknown header instance "%s".' % hdr_name, 'extract error')
 
         index = "''" if  len(stmt)<3 else stmt[2]
-
+        if index == 'next' or index == 'last': index = `index`
         code = 'p4.extract(p4.get_hdr_inst("' + hdr_name + '", ' + index + '), bits)'
         # print code
         return ('', code)

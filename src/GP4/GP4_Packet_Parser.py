@@ -36,6 +36,7 @@ def parse_packet(p4, pkt, init_state):
         (err, new_bytes_used, state) = parse_func.execute( p4, bits)
 
         bytes_used += new_bytes_used
+        if err: return (err, bytes_used)
 
 
     print "After parsing, the following headers are defined:"
