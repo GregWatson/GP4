@@ -34,11 +34,23 @@ class Header_Stack(Header_Instance):
         self.stack_max_size = hdr_max_inst_val # Integer. How many instances can we hold
         self.stack          = [ ] # [ Header_Instance objects ]
 
-    ## Return the specified (indexed) instance.
+
+    ## Return bool if stack index is in range (legal). Entry need not exist yet.
+    # @param self : object
+    # @param index : number or string 'next' or string 'last'
+    # @return Bool
+    def is_legal_index(self, index):
+        if index == 'last': return True
+        if index == 'next':
+            return len(self.stack) < self.stack_max_size
+        return int(index) < self.stack_max_size
+    
+
+    ## Return the specified (indexed) instance. Create it if needed.
     # @param self : object
     # @param index : number or string 'next' or string 'last'
     # @return actual header instance. Create instance if needed.  None if error
-    def get_indexed_instance(self, index):
+    def get_or_create_indexed_instance(self, index):
         """ index may be a number or 'next'.
             Create instance if it does not exist, IF it is the next to be created.
         """

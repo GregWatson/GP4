@@ -3,6 +3,7 @@
 ## @package GP4
 
 from GP4_Utilities import print_syntax_err
+import GP4_Exceptions
 import sys
 
 class P4(object):
@@ -77,12 +78,13 @@ class P4(object):
         return self.parser_functions.get(func_name)
 
 
-    ## Returns the actual named header instance (or stack) or None
+    ## Returns the actual named header instance (or stack) or None.
     # @param self : P4 object
     # @param hdr_name : name of the hdr instance
     # @param index    : either '' if hdr is scalar or, if stack, stack index number or 'next'
     # @returns header_inst or header_stack object (or None)
-    def get_hdr_inst(self, hdr_name, index):
+    def get_or_create_hdr_inst(self, hdr_name, index):
+        """ This will create a new stack entry if it does not already exist """
         #print "get_hdr_inst:", hdr_name, index
         if index == '':
             return self.header_insts.get(hdr_name)  # scalar
@@ -90,13 +92,31 @@ class P4(object):
             # stack
             stack = self.header_insts.get(hdr_name)
             if not stack: 
-                print "Error: stack %s not found." % hdr_name
-                return None
+                raise GP4_Exceptions.RuntimeError, \
+                         [ 'Error: stack %s not found.' % hdr_name ]
             if stack.typ != 'header_stack':
-                print 'Error: Header inst "%s" is not a stack.' % hdr_name
-                return None
-            return stack.get_indexed_instance(index)
+                raise GP4_Exceptions.RuntimeError, \
+                         ['Error: Header inst "%s" is not a stack.' % hdr_name ]
+            h_inst = stack.get_or_create_indexed_instance(index)
+            if not h_inst:
+                raise GP4_Exceptions.RuntimeError,"stack error: " + hdr_name
+            return h_inst
 
+
+    ## Returns bool indicating if stack index is OK
+    # @param self : P4 object
+    # @param hdr_name : name of the hdr instance
+    # @param index    : stack index number or 'next'
+    # @returns Bool
+    def check_stack_index(self, hdr_name, index):
+        stack = self.header_insts.get(hdr_name)
+        if not stack: 
+                raise GP4_Exceptions.RuntimeError, \
+                         'Error: stack %s not found.' % hdr_name
+        if stack.typ != 'header_stack':
+                raise GP4_Exceptions.RuntimeError, \
+                         'Error: Header inst "%s" is not a stack.' % hdr_name
+        return stack.is_legal_index(index)
 
     ## Returns bool as to whether the hdr inst was declared in source.
     # @param self : P4 object
@@ -129,7 +149,7 @@ class P4(object):
             if err: return(err, bits_used/8, '')
 
         for f in hdr.fields:
-            num_bits        = f.bit_width
+            num_bits        = int(f.bit_width)
             assert num_bits > 0,"fixme: variable bit width not implemented"
             err, field_bits = bits.get_next_bits(num_bits)
             if err: return(err, bits_used/8, '')

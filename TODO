@@ -1,0 +1,8 @@
+- COmpile 'length' definitions
+
+- Handle '*' in bit_width   (requires 'length' to be handled.)
+
+- handle set_metadata
+
+- handle switch
+

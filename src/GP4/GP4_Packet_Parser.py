@@ -7,6 +7,7 @@
 
 from GP4_Utilities import print_syntax_err
 from GP4_Utilities import Bits
+import GP4_Exceptions
 import sys
 
 ## Given a P4 object and a packet, parse the packet: i.e. create and populate the headers.
@@ -36,7 +37,8 @@ def parse_packet(p4, pkt, init_state):
         (err, new_bytes_used, state) = parse_func.execute( p4, bits)
 
         bytes_used += new_bytes_used
-        if err: return (err, bytes_used)
+        if err: 
+            raise  GP4_Exceptions.RuntimeError ([err])
 
 
     print "After parsing, the following headers are defined:"

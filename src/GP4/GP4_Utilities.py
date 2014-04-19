@@ -60,8 +60,9 @@ class Bits(object):
     # @param num_to_get : integer
     # @return (err, extracted_bits) err=string,  extracted_bits=integer
     def get_next_bits(self, num_to_get):
+       
         if num_to_get == 0:
-            return ('Bits:get_next_bits: number ot get is zero!',0)
+            return ('Bits:get_next_bits: number to get is zero!',0)
 
         if len(self.bytes) == 0:
             return ('Bits:get_next_bits: no bytes left!',0)
@@ -73,7 +74,7 @@ class Bits(object):
 
         extracted_bits = 0
 
-        while num_to_get >= self.bits_left:
+        while num_to_get and num_to_get >= self.bits_left:
 
             num_to_get    -= self.bits_left
             extracted_bits = ( extracted_bits << self.bits_left ) | self.pop(self.bits_left)
@@ -91,6 +92,10 @@ class Bits(object):
     # @return extracted_bits
     def pop(self, num_to_get):
         """ It's an error to try to pop more bits than are left """
+
+        assert  (num_to_get > 0 and num_to_get <= 8), \
+                "ERROR: Trying to pop %d bits. Must be 1-8." % num_to_get
+
         if num_to_get > self.bits_left:
             print "Bits:pop(): trying to pop",num_to_get,"bits but only",self.bits_left," left."
             sys.exit(1)

@@ -1,3 +1,5 @@
+# GP4_Exceptions.py
+## @package GP4
 # Custom Exception types
 
 import exceptions
@@ -11,6 +13,10 @@ class InternalError(exceptions.Exception):
         self.args = args
 
 class RuntimeError(exceptions.Exception):
+    def __init__(self, args = []):
+        self.args = args
+
+class InsufficientBytesRuntimeError(exceptions.Exception):
     def __init__(self, args = []):
         self.args = args
 

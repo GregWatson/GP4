@@ -151,25 +151,156 @@ parser DO_L9  { extract ( L9_hdr ) ;
 header L2_def {
     fields { DA : 48; SA : 48; }
 }
-header L9_def {
-    fields { type : 5; three_bits : 3; }
-}
 
 L2_def L2_hdr[2];
-L9_def L9_hdr;
 
 parser start  { extract ( L2_hdr[0] ) ; 
-                return DO_L9 ;
+                return DO_L2 ;
               }
-parser DO_L9  { extract ( L2_hdr[next] ) ; 
+parser DO_L2  { extract ( L2_hdr[next] ) ; 
                 return P4_PARSING_DONE ; 
               }
 """
         pkt = [ i for i in range(20) ]
-        (err, num_bytes_used ) = parse_and_run_test(program, pkt, init_state='start', debug=debug)
+        try:
+            (err, num_bytes_used ) = parse_and_run_test(program, pkt, init_state='start', debug=debug)
+        except GP4.GP4_Exceptions.RuntimeError,err:
+            print "RUntime Error was expected"
 
-        self.assert_( err=='', 'Saw parse runtime err:' + str(err) )
-        self.assert_( num_bytes_used == 13, 'Expected 13 bytes consumed, Saw %d.' % num_bytes_used )
+
+
+    """ Test parser. stack err ------------------------------------------------------------"""
+    def test5a(self, debug=1):
+
+        program = """
+header L2_def {
+    fields { DA : 48; SA : 48; }
+}
+
+L2_def L2_hdr[2];
+
+parser start  { extract ( L2_hdr[2] ) ;  /* out of range */
+                return P4_PARSING_DONE ;
+              }
+
+"""
+        pkt = [ i for i in range(20) ]
+        try:
+            (err, num_bytes_used ) = parse_and_run_test(program, pkt, init_state='start', debug=debug)
+        except GP4.GP4_Exceptions.RuntimeError,err:
+            print "Runtime Error was expected."
+            print err[0][0]
+
+    """ Test parser. run time stack err ------------------------------------------------------------"""
+    def test5b(self, debug=1):
+
+        program = """
+header L2_def {
+    fields { DA : 48; SA : 48; }
+}
+
+L2_def L2_hdr[1];
+
+parser start  { extract ( L2_hdr[0] ) ;
+                return P4_ERR ;
+              }
+parser P4_ERR { extract ( L2_hdr[next] ) ;  /* out of range */
+                return P4_PARSING_DONE ;
+              }
+
+"""
+        pkt = [ i for i in range(20) ]
+        try:
+            (err, num_bytes_used ) = parse_and_run_test(program, pkt, init_state='start', debug=debug)
+        except GP4.GP4_Exceptions.RuntimeError,err:
+            print "Runtime Error was expected."
+
+
+
+
+    """ Test parser runtime ------------------------------------------------------------"""
+    def test6(self, debug=1):
+
+        program = """
+header L2_def {
+    fields { DA : 48; SA : 48; }
+}
+
+L2_def L2_hdr[5];
+
+parser start  { extract ( L2_hdr[0] ) ; 
+                return GET_L2_1 ;
+              }
+parser GET_L2_1  { extract ( L2_hdr[next] ) ; 
+                   return GET_L2_2 ; 
+                 }
+parser GET_L2_2  { extract ( L2_hdr[2] ) ; 
+                   return GET_L2_3 ; 
+                 }
+parser GET_L2_3  { extract ( L2_hdr[next] ) ; 
+                   return GET_L2_4 ; 
+                 }
+parser GET_L2_4  { extract ( L2_hdr[4] ) ; 
+                   return  P4_PARSING_DONE ; 
+                 }
+"""
+        
+        exp_bytes_used = 5*12
+        pkt = [ i for i in range(60) ]
+
+        try:
+
+            (err, num_bytes_used ) = parse_and_run_test(program, pkt, init_state='start', 
+                                                        debug=debug)
+            self.assert_( err=='', 'Saw parse runtime err:' + str(err) )
+            self.assert_( num_bytes_used == exp_bytes_used, 
+                      'Expected %d bytes consumed, Saw %d.' % (exp_bytes_used, num_bytes_used ))
+
+        except GP4.GP4_Exceptions.RuntimeError,err:
+            print "Unexpected Runtime Error:",err
+            self.assert_(False)
+
+
+    """ Test parser set metadata ------------------------------------------------------------"""
+    def test7(self, debug=1):
+
+        program = """
+header L2_def {
+    fields { DA : 48; SA : 48; }
+}
+header meta_def {
+    fields { number: 32 ; }
+}
+
+L2_def    L2_hdr;
+meta_def  metadata  meta;
+
+parser start  { extract ( L2_hdr ) ; 
+                return GET_META ;
+              }
+parser GET_META  { set_metadata ( meta.nunber, 1234 ) ; 
+                   return  P4_PARSING_DONE ; 
+                 }
+"""
+        
+        exp_bytes_used = 1*12
+        pkt = [ i for i in range(12) ]
+
+        try:
+
+            (err, num_bytes_used ) = parse_and_run_test(program, pkt, init_state='start', 
+                                                        debug=debug)
+            self.assert_( err=='', 'Saw parse runtime err:' + str(err) )
+            self.assert_( num_bytes_used == exp_bytes_used, 
+                      'Expected %d bytes consumed, Saw %d.' % (exp_bytes_used, num_bytes_used ))
+
+        except GP4.GP4_Exceptions.RuntimeError,err:
+            print "Unexpected Runtime Error:",err
+            self.assert_(False)
+
+
+
+
 
 
 
@@ -179,5 +310,5 @@ if __name__ == '__main__':
     #        python -m unittest discover
 
     single = unittest.TestSuite()
-    single.addTest( test_dev('test5' ))
+    single.addTest( test_dev('test7' ))
     unittest.TextTestRunner().run(single)

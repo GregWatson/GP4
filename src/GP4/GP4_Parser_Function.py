@@ -110,6 +110,7 @@ class Parser_Function(AST_object):
 
            stmt is ['extract', 'L2_hdr'] or ['extract', 'L2_hdr', index] index= str(num) or 'next' 
         """
+        print "extract:",stmt
         assert len(stmt)>1
         hdr_name  = stmt[1]
 
@@ -117,9 +118,16 @@ class Parser_Function(AST_object):
         if not p4.hdr_inst_defined(hdr_name):
             return ('Unknown header instance "%s".' % hdr_name, 'extract error')
 
-        index = "''" if  len(stmt)<3 else stmt[2]
-        if index == 'next' or index == 'last': index = `index`
-        code = 'p4.extract(p4.get_hdr_inst("' + hdr_name + '", ' + index + '), bits)'
+        if  len(stmt)<3 :
+            index = "''" 
+        else:
+            index = stmt[2]
+            if index == 'next' : index = "'next'"
+            else: #value
+                if not p4.check_stack_index(hdr_name, int(index)):
+                    return ('Stack index %s out of range for stack %s' % (index, hdr_name),'')
+                
+        code = 'p4.extract(p4.get_or_create_hdr_inst("' + hdr_name + '", ' + index + '), bits)'
         # print code
         return ('', code)
 
