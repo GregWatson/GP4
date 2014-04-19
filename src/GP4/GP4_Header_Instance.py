@@ -24,9 +24,11 @@ class Header_Instance(AST_object):
         self.hdr_is_metadata  = hdr_is_metadata  # Bool.
         self.hdr_inst_name    = hdr_inst_name    # name of this instance
 
-        self.is_valid = False   # Bool. Set when fields are actually created (extracted)
-        self.fields = []        # ordered list of Field objects
-        self.field_names = []   # ordered list of field names
+        self.fields_created = False   # Bool. Set when fields are actually created (extracted)
+        self.fields         = []      # ordered list of Field objects
+        self.field_names    = []      # ordered list of field names
+
+
 
     ## Instantiate the actual fields from the header_decl
     # @param self : object
@@ -38,15 +40,44 @@ class Header_Instance(AST_object):
             return('Unknown header declaration "%s" referenced by header instance "%s"' %
                     (self.hdr_type_name, self.hdr_inst_name) )
 
-        self.fields      = decl.copy_fields()
-        self.field_names = [ f.name for f in self.fields ]
-        self.is_valid    = True
+        self.fields         = decl.copy_fields()
+        self.field_names    = [ f.name for f in self.fields ]
+        self.fields_created = True
+
+        print "Created fields for",self.hdr_inst_name
         return ''
+
+
+
+
+    ## Set field to given value
+    # @param self : object
+    # @param field_name : String
+    # @param val : Integer
+    # @return None    
+    def set_field(self, field_name, val): 
+
+        for ix,fname in enumerate(self.field_names):
+            if fname == field_name:
+                self.fields[ix].set_value( val )
+                print "set %s.%s to %s" % (self.hdr_inst_name, field_name, val)
+                return
+                
+        assert False,"set_field: Unknown field name %s" % field_name
+
+
+
+    ## Return the name of the declaration for this instance
+    # @param self : object
+    # @returns String
+    def get_decl_name(self):
+        return self.hdr_type_name
+
 
     def __str__(self):
         s = self.hdr_type_name + ' ' + self.hdr_inst_name
         s += ' [metadata]' if self.hdr_is_metadata else ''
-        if self.is_valid:
+        if self.fields_created:
             s += '\n'
             for f in self.fields: s += '   ' + str(f) + '\n'
         return s

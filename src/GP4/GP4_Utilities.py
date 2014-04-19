@@ -41,6 +41,25 @@ def print_syntax_err(err_msg, string='', loc=0):
     if string: show_source_loc(string, loc)
     raise GP4_Exceptions.SyntaxError('')
 
+## Convert hdr ref PyParsing object to string
+# @param hdr_ref : PyParsing object
+# @return String
+def hdr_ref_to_string(hdr_ref):
+    """ hdr ref is list of length 1 or 2 """
+    if len(hdr_ref)==1: return hdr_ref[0]
+    else:
+        assert len(hdr_ref)==2
+        return "%s[%s]" % (hdr_ref[0], hdr_ref[1])
+
+## Convert field ref PyParsing object to string
+# @param field_ref : PyParsing object
+# @return String
+def field_ref_to_string(field_ref):
+    """ field ref is list of length 2: hdr_ref and field_name """
+    assert len(field_ref)==2
+    return  hdr_ref_to_string(field_ref[0]) + "." + field_ref[1]
+
+
 
 # Bits class. Behaves as an ordered sequence of bits.
 

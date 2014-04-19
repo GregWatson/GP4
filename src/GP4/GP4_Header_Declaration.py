@@ -81,6 +81,15 @@ class Header_Declaration(AST_object):
 
 
 
+    ## Return bool indicating id specified field name is in this declaration
+    # @param self : object
+    # @param String: field_name
+    # @returns Bool
+    def is_legal_field(self, field_name):
+        return field_name in self.field_names 
+
+
+
     def __str__(self):
         s = self.name + ' {\n'
         for f in self.fields: s += '\t' + str(f) + '\n'

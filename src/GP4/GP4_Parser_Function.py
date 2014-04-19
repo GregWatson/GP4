@@ -2,7 +2,7 @@
 #
 ## @package GP4
 
-from GP4_Utilities  import print_syntax_err
+from GP4_Utilities  import *
 from GP4_AST_object import AST_object
 import GP4_Exceptions
 import sys
@@ -130,6 +130,34 @@ class Parser_Function(AST_object):
         code = 'p4.extract(p4.get_or_create_hdr_inst("' + hdr_name + '", ' + index + '), bits)'
         # print code
         return ('', code)
+
+
+    ## Compile a set_metadata statement and return the compiled python text.
+    # @param self : object
+    # @param stmt : PyParsing list of parsed objects.
+    # @param p4   : P4 object
+    # @returns (err, code) 
+    def compile_stmt_set_metadata(self, stmt, p4):
+        """Each statement should return (err, bytes_used, state)
+           where bytes_used is bytes used by that statement.
+        """
+        print "compile_stmt_set_metadata:",stmt
+        assert len(stmt)==3 # 'set_metadata', [ field_ref ], value
+        code = ''
+        field_ref   = stmt[1]
+        field_value = stmt[2]
+        if not p4.is_legal_field_ref(field_ref):
+            return ("Field ref '%s' unknown." % field_ref_to_string(field_ref), '')
+        assert len(field_ref) == 2   # [hdr_name], field_name.   No stack allowed.
+        assert len(field_ref[0]) == 1  # hdr_name
+        hdr_name = field_ref[0][0]
+        field_name = field_ref[1]
+        code = 'p4.set_hdr_field(p4.get_or_create_hdr_inst("' + hdr_name + '", ""), "%s", %s)' % \
+                            (field_name, int(field_value) )
+        print code
+        return ('', code)
+
+
 
 
     ## Compile a return done statement and return the compiled python text.

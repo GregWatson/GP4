@@ -269,16 +269,16 @@ header L2_def {
     fields { DA : 48; SA : 48; }
 }
 header meta_def {
-    fields { number: 32 ; }
+    fields { number: 32 ; unused : 64;}
 }
 
 L2_def    L2_hdr;
-meta_def  metadata  meta;
+meta_def  metadata  meta_hdr;
 
 parser start  { extract ( L2_hdr ) ; 
                 return GET_META ;
               }
-parser GET_META  { set_metadata ( meta.nunber, 1234 ) ; 
+parser GET_META  { set_metadata ( meta_hdr.number, 1234 ) ; 
                    return  P4_PARSING_DONE ; 
                  }
 """

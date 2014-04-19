@@ -1,8 +1,12 @@
-- COmpile 'length' definitions
+- Tests must check extracted hdrs to verify values.
+
+- Compile 'length' definitions
 
 - Handle '*' in bit_width   (requires 'length' to be handled.)
 
+- handle switch in parser functions
+
+DONE
 - handle set_metadata
 
-- handle switch
 

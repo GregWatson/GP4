@@ -32,12 +32,12 @@ class Field(AST_object):
     ## Assign a value
     # @param self  : object
     # @param value : Integer. New value for this field.
-    # @param num_bits : Integer. Number of bits to associate with value
+    # @param num_bits : Integer. Number of bits to associate with value. If None: use bit_width
     # @returns None
-    def set_value(self, value, num_bits):
+    def set_value(self, value, num_bits=None):
         self.value    = value
         self.is_valid = True
-        self.valid_bits = num_bits
+        self.valid_bits = num_bits if num_bits != None else self.bit_width
 
 
     ## Convert field to a printable string
@@ -45,7 +45,7 @@ class Field(AST_object):
     # @returns String representing field
     def __str__(self):
         s = self.name + ':' + str(self.bit_width) 
-        if self.is_valid: s+= " val=0x%x " % self.value
+        s+= " val=0x%x " % self.value if self.is_valid else " <undef>"
         if len(self.modifiers):
             s += '('+ ','.join(self.modifiers) + ')'
         return s

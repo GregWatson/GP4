@@ -118,6 +118,29 @@ class P4(object):
                          'Error: Header inst "%s" is not a stack.' % hdr_name
         return stack.is_legal_index(index)
 
+    
+    ## Returns bool indicating if field ref is legal (is a defined field)
+    # @param self : P4 object
+    # @param field_ref : PyParsing field_ref object
+    # @returns Bool
+    def is_legal_field_ref(self, field_ref):
+        assert len(field_ref)==2 # hdr ref, field name
+        hdr_ref    = field_ref[0]  # list
+        field_name = field_ref[1]  # string
+
+        hdr_inst_name = hdr_ref[0]  # [0] = name, [1]=index if present
+    
+        if not self.hdr_inst_defined(hdr_inst_name): return False
+
+        # get the hdr decl for this hdr_inst
+        hdr_decl_name = self.header_insts[hdr_inst_name].get_decl_name()
+        hdr_decl      = self.get_header_decl(hdr_decl_name)
+
+        assert hdr_decl != None
+
+        return hdr_decl.is_legal_field(field_name)
+
+
     ## Returns bool as to whether the hdr inst was declared in source.
     # @param self : P4 object
     # @param hdr_name : name of the hdr instance
@@ -144,7 +167,7 @@ class P4(object):
         err = ''
         bits_used  = 0
 
-        if not hdr.is_valid: 
+        if not hdr.fields_created: 
             err = hdr.create_fields(self)
             if err: return(err, bits_used/8, '')
 
@@ -156,7 +179,6 @@ class P4(object):
             f.set_value(field_bits, num_bits)
             bits_used += num_bits
 
-        hdr.is_valid = True
 
         print "extracted",bits_used/8,"bits"
         print hdr
@@ -164,7 +186,20 @@ class P4(object):
 
         return (err, bits_used/8, '')
 
+    ## Set the specified field in given hdr object to given value
+    # @param self : P4 object
+    # @param hdr  : hdr instance
+    # @param field_name : String
+    # @param val  : Integer
+    # @returns (err, bytes_used, state). return state is just ''
+    def set_hdr_field(self, hdr, field_name, val):
 
+        if not hdr.fields_created: 
+            err = hdr.create_fields(self)
+            if err: return(err, 0, '')
+
+        hdr.set_field(field_name, val)
+        return('', 0, '')
 
 
 
