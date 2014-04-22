@@ -4,7 +4,7 @@
 #
 ##################################################
 
-import sys, unittest
+import sys, unittest, re
 sys.path.append("/home/gwatson/Work/GP4/src")
 try:
     from GP4.GP4_CompilerHelp import compile_string
@@ -36,17 +36,18 @@ def simple_test(program, debug=0):
 # @param pkt     : [ byte ] i.e. list of integers
 # @param init_state : String. Name of initial parser state
 # @param debug   : Integer. Debug flags
-# @return (err, bytes_used) : (err !=None if error), bytes_used = number of bytes consumed from header.
+# @return (p4, err, bytes_used) : (err !=None if error), bytes_used = number of bytes consumed from header.
 def parse_and_run_test(program, pkt, init_state='start', debug=0):
 
     p4 = compile_string( program=program )
 
     if not p4:
         print "Hmmm. Syntax error?"
+        sys.exit(1)
   
     err, bytes_used = parse_packet(p4, pkt, init_state)
 
-    return (err, bytes_used)
+    return (p4, err, bytes_used)
 
 
     
@@ -54,6 +55,43 @@ class test_dev(unittest.TestCase):
 
     def setUp(self): pass
     def tearDown(self):pass
+
+    ## Check that the specified field has the specified value
+    # @param self : test
+    # @param p4   : p4 object
+    # @param field_ref : String.  e.g. 'L2_hdr.DA' or 'vlan[3].my_field'
+    # @param val : Integer: expected value
+    # @returns None: will assert a failure
+    def check_field(self, p4, field_ref, val):
+        # extract index, if any
+        tmatch = re.match( r'([a-zA-Z0-9_]+)\[([a-zA-Z0-9_]+)\]\.([a-zA-Z0-9_]+)', field_ref)
+        if tmatch:
+            hdr_name   = tmatch.group(1)
+            hdr_index  = int(tmatch.group(2))
+            field_name = tmatch.group(3)
+        else:
+            tmatch = re.match( r'([a-zA-Z0-9_]+)\.([a-zA-Z0-9_]+)', field_ref)
+            if tmatch:
+                hdr_name   = tmatch.group(1)
+                hdr_index  = ''
+                field_name = tmatch.group(2)
+            else:
+                print "check_field: unable to parse field_ref:", field_ref
+                sys.exit(1)
+        # Now get the actual header object from P4.
+        hdr_i = p4.get_or_create_hdr_inst(hdr_name, hdr_index)
+        self.assert_( hdr_i,"Unable to find header from field ref:" + field_ref)
+
+        act_val = hdr_i.get_field(field_name)
+        if act_val == None and val == None: return
+
+        self.assert_( act_val != None, 
+                "Field %s returned value None: incorrect field name perhaps?" % field_ref )
+
+        self.assert_( act_val == val, "Expected field %s to have value 0x%x but saw 0x%x" % 
+                        ( field_ref, val, act_val ) )
+                    
+
     
 
     """ Test header decl and header insts  -----------------------------------------"""
@@ -138,10 +176,14 @@ parser DO_L9  { extract ( L9_hdr ) ;
               }
 """
         pkt = [ i for i in range(20) ]
-        (err, num_bytes_used ) = parse_and_run_test(program, pkt, init_state='start', debug=debug)
+        (p4, err, num_bytes_used ) = parse_and_run_test(program, pkt, init_state='start', debug=debug)
 
         self.assert_( err=='', 'Saw parse runtime err:' + str(err) )
         self.assert_( num_bytes_used == 13, 'Expected 13 bytes consumed, Saw %d.' % num_bytes_used )
+        self.check_field( p4, 'L2_hdr.DA', 0x102030405 )
+        self.check_field( p4, 'L2_hdr.SA', 0x60708090a0b )
+        self.check_field( p4, 'L9_hdr.type', 1 )
+        self.check_field( p4, 'L9_hdr.three_bits', 4 )
 
 
     """ Test parser runtime ------------------------------------------------------------"""
@@ -163,7 +205,7 @@ parser DO_L2  { extract ( L2_hdr[next] ) ;
 """
         pkt = [ i for i in range(20) ]
         try:
-            (err, num_bytes_used ) = parse_and_run_test(program, pkt, init_state='start', debug=debug)
+            (p4, err, num_bytes_used ) = parse_and_run_test(program, pkt, init_state='start', debug=debug)
         except GP4.GP4_Exceptions.RuntimeError,err:
             print "RUntime Error was expected"
 
@@ -186,7 +228,7 @@ parser start  { extract ( L2_hdr[2] ) ;  /* out of range */
 """
         pkt = [ i for i in range(20) ]
         try:
-            (err, num_bytes_used ) = parse_and_run_test(program, pkt, init_state='start', debug=debug)
+            (p4, err, num_bytes_used ) = parse_and_run_test(program, pkt, init_state='start', debug=debug)
         except GP4.GP4_Exceptions.RuntimeError,err:
             print "Runtime Error was expected."
             print err[0][0]
@@ -211,7 +253,7 @@ parser P4_ERR { extract ( L2_hdr[next] ) ;  /* out of range */
 """
         pkt = [ i for i in range(20) ]
         try:
-            (err, num_bytes_used ) = parse_and_run_test(program, pkt, init_state='start', debug=debug)
+            (p4, err, num_bytes_used ) = parse_and_run_test(program, pkt, init_state='start', debug=debug)
         except GP4.GP4_Exceptions.RuntimeError,err:
             print "Runtime Error was expected."
 
@@ -250,11 +292,22 @@ parser GET_L2_4  { extract ( L2_hdr[4] ) ;
 
         try:
 
-            (err, num_bytes_used ) = parse_and_run_test(program, pkt, init_state='start', 
+            (p4, err, num_bytes_used ) = parse_and_run_test(program, pkt, init_state='start', 
                                                         debug=debug)
             self.assert_( err=='', 'Saw parse runtime err:' + str(err) )
             self.assert_( num_bytes_used == exp_bytes_used, 
                       'Expected %d bytes consumed, Saw %d.' % (exp_bytes_used, num_bytes_used ))
+
+            self.check_field( p4, 'L2_hdr[0].DA', 0x102030405 )
+            self.check_field( p4, 'L2_hdr[0].SA', 0x60708090a0b )
+            self.check_field( p4, 'L2_hdr[1].DA', 0x0c0d0e0f1011 )
+            self.check_field( p4, 'L2_hdr[1].SA', 0x121314151617 )
+            self.check_field( p4, 'L2_hdr[2].DA', 0x18191a1b1c1d )
+            self.check_field( p4, 'L2_hdr[2].SA', 0x1e1f20212223 )
+            self.check_field( p4, 'L2_hdr[3].DA', 0x242526272829 )
+            self.check_field( p4, 'L2_hdr[3].SA', 0x2a2b2c2d2e2f )
+            self.check_field( p4, 'L2_hdr[4].DA', 0x303132333435 )
+            self.check_field( p4, 'L2_hdr[4].SA', 0x363738393a3b )
 
         except GP4.GP4_Exceptions.RuntimeError,err:
             print "Unexpected Runtime Error:",err
@@ -288,11 +341,15 @@ parser GET_META  { set_metadata ( meta_hdr.number, 1234 ) ;
 
         try:
 
-            (err, num_bytes_used ) = parse_and_run_test(program, pkt, init_state='start', 
+            (p4, err, num_bytes_used ) = parse_and_run_test(program, pkt, init_state='start', 
                                                         debug=debug)
             self.assert_( err=='', 'Saw parse runtime err:' + str(err) )
             self.assert_( num_bytes_used == exp_bytes_used, 
                       'Expected %d bytes consumed, Saw %d.' % (exp_bytes_used, num_bytes_used ))
+            self.check_field( p4, 'L2_hdr.DA', 0x102030405 )
+            self.check_field( p4, 'L2_hdr.SA', 0x60708090a0b )
+            self.check_field( p4, 'meta_hdr.number', 1234 )
+            self.check_field( p4, 'meta_hdr.unused', None )
 
         except GP4.GP4_Exceptions.RuntimeError,err:
             print "Unexpected Runtime Error:",err

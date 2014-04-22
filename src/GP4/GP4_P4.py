@@ -204,6 +204,7 @@ class P4(object):
 
 
 
+
     ## Create printable string for Global object
     # @param self : Global object
     # @return String 

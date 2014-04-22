@@ -40,6 +40,14 @@ class Field(AST_object):
         self.valid_bits = num_bits if num_bits != None else self.bit_width
 
 
+    ## Return value
+    # @param self  : object
+    # @returns value : Integer. Value for this field.
+    def get_value(self):
+        if self.is_valid: return self.value
+        else: return None
+
+
     ## Convert field to a printable string
     # @param self  : object
     # @returns String representing field

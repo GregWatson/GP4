@@ -67,6 +67,19 @@ class Header_Instance(AST_object):
 
 
 
+    ## Get value of field
+    # @param self : object
+    # @param field_name : String
+    # @return val : Integer
+    def get_field(self, field_name): 
+
+        for ix,fname in enumerate(self.field_names):
+            if fname == field_name:
+                return self.fields[ix].get_value()
+
+        return None
+
+
     ## Return the name of the declaration for this instance
     # @param self : object
     # @returns String
