@@ -45,30 +45,35 @@ class Parser_Function(AST_object):
     # @param p4   : P4 object
     # @returns err
     def compile_func(self, p4):
-        """ The actual compiled code has signature:
+        """ The function code has signature:
             (err, bytes_used, state) = func( p4, bits)
 
-            Each statement should return (err, bytes_used, state)
+            The last code for each statement should return (err, bytes_used, state)
             where bytes_used is bytes used by that statement.
         """
         err = None
-        codeL = [ 
-                  'def f(self, p4, bits):',
-                  '    err = ""; total_bytes = 0; state=self.name',
-                  '    print "executing func",self.name'
-                ]
+        func_code = [ 
+                     'def f(self, p4, bits):',
+                     '    err = ""; total_bytes = 0; state=self.name',
+                     '    print "executing func",self.name'
+                    ]
 
         for stmt in self.func_body_text: 
             # print "compiling stmt ", stmt
-            err, code = self.compile_stmt(stmt, p4)
-            codeL.append('    (err, bytes_used, state)=' + code)
-            codeL.append('    total_bytes += bytes_used')
-            codeL.append('    if err: return (err, total_bytes, state)' )
+            err, codeL = self.compile_stmt(stmt, p4) # codeL is list of python statements
             if err: return (err, codeL)
 
-        codeL.append('    return (err, total_bytes, state)')
+            if len(codeL)>1:
+                for code in codeL[0:-1]: func_code.append('    ' + code)
 
-        text = '\n'.join(codeL)
+            func_code.append('    (err, bytes_used, state)=' + codeL[-1])
+            func_code.append('    total_bytes += bytes_used')
+            func_code.append('    if err: return (err, total_bytes, state)' )
+            if err: return (err, func_code)
+
+        func_code.append('    return (err, total_bytes, state)')
+
+        text = '\n'.join(func_code)
         print "Compiling code:\n",text
 
         try:
@@ -85,9 +90,9 @@ class Parser_Function(AST_object):
     # @param self : object
     # @param stmt : PyParsing list of parsed objects.
     # @param p4   : P4 object
-    # @returns (err, code) 
+    # @returns (err, [code]) 
     def compile_stmt(self, stmt, p4):
-        """    Each statement should return (err, bytes_used, state)
+        """    Last code line should return (err, bytes_used, state)
                where bytes_used is bytes used by that statement.
         """
         stmt_typ = 'compile_stmt_' + stmt[0]  # e.g. compile_stmt_extract
@@ -103,9 +108,9 @@ class Parser_Function(AST_object):
     # @param self : object
     # @param stmt : PyParsing list of parsed objects.
     # @param p4   : P4 object
-    # @returns (err, code) 
+    # @returns (err, [code]) 
     def compile_stmt_extract(self, stmt, p4):
-        """Each statement should return (err, bytes_used, state)
+        """Last code line should return (err, bytes_used, state)
            where bytes_used is bytes used by that statement.
 
            stmt is ['extract', 'L2_hdr'] or ['extract', 'L2_hdr', index] index= str(num) or 'next' 
@@ -127,7 +132,9 @@ class Parser_Function(AST_object):
                 if not p4.check_stack_index(hdr_name, int(index)):
                     return ('Stack index %s out of range for stack %s' % (index, hdr_name),'')
                 
-        code = 'p4.extract(p4.get_or_create_hdr_inst("' + hdr_name + '", ' + index + '), bits)'
+        code = [ 'hdr_i = p4.get_or_create_hdr_inst("' + hdr_name + '", ' + index + ')',
+                 'if not hdr_i: print "Error: header \'%s\' not found."' % hdr_name,
+                 'p4.extract(hdr_i, bits)' ]
         # print code
         return ('', code)
 
@@ -136,14 +143,14 @@ class Parser_Function(AST_object):
     # @param self : object
     # @param stmt : PyParsing list of parsed objects.
     # @param p4   : P4 object
-    # @returns (err, code) 
+    # @returns (err, [code]) 
     def compile_stmt_set_metadata(self, stmt, p4):
-        """Each statement should return (err, bytes_used, state)
+        """Last code line should return (err, bytes_used, state)
            where bytes_used is bytes used by that statement.
         """
         print "compile_stmt_set_metadata:",stmt
         assert len(stmt)==3 # 'set_metadata', [ field_ref ], value
-        code = ''
+
         field_ref   = stmt[1]
         field_value = stmt[2]
         if not p4.is_legal_field_ref(field_ref):
@@ -152,8 +159,10 @@ class Parser_Function(AST_object):
         assert len(field_ref[0]) == 1  # hdr_name
         hdr_name = field_ref[0][0]
         field_name = field_ref[1]
-        code = 'p4.set_hdr_field(p4.get_or_create_hdr_inst("' + hdr_name + '", ""), "%s", %s)' % \
-                            (field_name, int(field_value) )
+        code = [ 'hdr_i = p4.get_or_create_hdr_inst("' + hdr_name + '", "")',
+                 'if not hdr_i: print "Error: header \'%s\' not found."' % hdr_name,
+                 'p4.set_hdr_field(hdr_i, "%s", %s)' % \
+                            (field_name, int(field_value) ) ]
         print code
         return ('', code)
 
@@ -164,28 +173,63 @@ class Parser_Function(AST_object):
     # @param self : object
     # @param stmt : PyParsing list of parsed objects.
     # @param p4   : P4 object
-    # @returns (err, code) 
+    # @returns (err, [code]) 
     def compile_stmt_return_done(self, stmt, p4):
-        """Each statement should return (err, bytes_used, state)
+        """Last code line should return (err, bytes_used, state)
            where bytes_used is bytes used by that statement.
         """
         code = '("", 0, "P4_PARSING_DONE")'
-        return ('', code)
+        return ('', [code])
 
 
     ## Compile a 'return next_state' statement and return the compiled python text.
     # @param self : object
     # @param stmt : PyParsing list of parsed objects.
     # @param p4   : P4 object
-    # @returns (err, code) 
+    # @returns (err, [code]) 
     def compile_stmt_return_prsr_state(self, stmt, p4):
-        """Each statement should return (err, bytes_used, state)
+        """Last code line should return (err, bytes_used, state)
            where bytes_used is bytes used by that statement.
 
            stmt is ['return_prsr_state', 'DO_L9']
         """
         code = '("", 0, "' + stmt[1] + '")'
-        return ('', code)
+        return ('', [code])
+
+
+    ## Compile a 'return switch' statement and return the compiled python text.
+    # @param self : object
+    # @param stmt : PyParsing list of parsed objects.
+    # @param p4   : P4 object
+    # @returns (err, [code]) 
+    def compile_stmt_return_switch(self, stmt, p4):
+        """Last code line should return (err, bytes_used, state)
+           where bytes_used is bytes used by that statement.
+
+           stmt is 'return_switch', [ switch_exps ]   case_entry, case_entry, .... 
+            e.g. [ 'return_switch',  [[[['L2_hdr'], 'type0']]],   [[['0']], 'GET_TYPE0']  ]
+                or
+            e.g. [ 'return_switch', 
+                   [ [[['L2_hdr'], 'type0']], [[['L3_hdr'], 'proto']] ], 
+                   [[['0']], 'GET_TYPE0'], 
+                   [[['1']], 'DONE']
+                 ] 
+
+        """
+        for el in stmt: print el
+        assert len(stmt)>2
+        switch_exp = stmt[1]     # list of switch_field_ref
+        case_entries = stmt[2:]  # list of case_entry
+
+        print "switch (", 
+        for el in switch_exp: print el,
+        print ")"
+        for el in case_entries: print el[0],"->",el[1]
+
+        GREG: need fun to gen code to generate switch_exp value
+
+
+        return ('', [code])
 
 
 

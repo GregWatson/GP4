@@ -1,12 +1,12 @@
-- Tests must check extracted hdrs to verify values.
+- handle return switch in parser functions
 
 - Compile 'length' definitions
 
 - Handle '*' in bit_width   (requires 'length' to be handled.)
 
-- handle switch in parser functions
 
 DONE
 - handle set_metadata
+- Tests must check extracted hdrs to verify values.
 
 

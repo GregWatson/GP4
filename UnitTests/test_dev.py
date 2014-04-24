@@ -358,6 +358,44 @@ parser GET_META  { set_metadata ( meta_hdr.number, 1234 ) ;
 
 
 
+    """ Test parser switch return ------------------------------------------------------------"""
+    def test8(self, debug=1):
+
+        program = """
+header L2_def { fields { type0: 8; }    }
+header Type_0 { fields { type1: 8; }    }
+
+L2_def    L2_hdr;
+Type_0    Type_0_hdr;
+
+parser start  { extract ( L2_hdr ) ; 
+                return switch ( L2_hdr.type0, zzz.jjj ) { 0 : GET_TYPE0 ; 1 : xxxxxx ; }
+              }
+parser GET_TYPE0 { extract ( Type_0_hdr ) ;
+                   return  P4_PARSING_DONE ; 
+                 }
+"""
+        
+        exp_bytes_used = 2
+        pkt = [ i for i in range(2) ]
+
+        try:
+
+            (p4, err, num_bytes_used ) = parse_and_run_test(program, pkt, init_state='start', 
+                                                        debug=debug)
+            self.assert_( err=='', 'Saw parse runtime err:' + str(err) )
+            self.assert_( num_bytes_used == exp_bytes_used, 
+                      'Expected %d bytes consumed, Saw %d.' % (exp_bytes_used, num_bytes_used ))
+            self.check_field( p4, 'L2_hdr.type0', 0x0 )
+            self.check_field( p4, 'Type_0_hdr.type1', 0x1 )
+
+        except GP4.GP4_Exceptions.RuntimeError,err:
+            print "Unexpected Runtime Error:",err
+            self.assert_(False)
+
+
+
+
 
 
 
@@ -367,5 +405,5 @@ if __name__ == '__main__':
     #        python -m unittest discover
 
     single = unittest.TestSuite()
-    single.addTest( test_dev('test7' ))
+    single.addTest( test_dev('test8' ))
     unittest.TextTestRunner().run(single)
