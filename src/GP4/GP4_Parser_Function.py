@@ -3,6 +3,7 @@
 ## @package GP4
 
 from GP4_Utilities  import *
+from GP4_Parser_Function_Code import gen_switch_exp_code
 from GP4_AST_object import AST_object
 import GP4_Exceptions
 import sys
@@ -216,7 +217,6 @@ class Parser_Function(AST_object):
                  ] 
 
         """
-        for el in stmt: print el
         assert len(stmt)>2
         switch_exp = stmt[1]     # list of switch_field_ref
         case_entries = stmt[2:]  # list of case_entry
@@ -224,12 +224,16 @@ class Parser_Function(AST_object):
         print "switch (", 
         for el in switch_exp: print el,
         print ")"
-        for el in case_entries: print el[0],"->",el[1]
+        for el in case_entries: print "\t",el[0],"->",el[1]
 
-        GREG: need fun to gen code to generate switch_exp value
+        # Generate code that evaluates switch_expr and puts value in 'sw_exp_val'
+        try:
+            codeL = gen_switch_exp_code(switch_exp, p4, 'sw_exp_val')
+        except:
+            sys.exit(1)
 
 
-        return ('', [code])
+        return ('', codeL)
 
 
 
