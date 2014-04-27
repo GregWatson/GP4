@@ -365,22 +365,36 @@ parser GET_META  { set_metadata ( meta_hdr.number, 1234 ) ;
 header L2_def { fields { type0: 8; }    }
 header L3_def { fields { jjj: 8;   }    }
 header Type_0 { fields { type1: 8; }    }
+header Type_1 { fields { four: 32; }    }
 
 L2_def    L2_hdr;
 L3_def    L3_hdr[3];
 Type_0    Type_0_hdr;
+Type_1    Type_1_hdr;
 
-parser start  { extract ( L2_hdr ) ; 
-                return switch ( L2_hdr.type0, L3_hdr[2].jjj,  latest.field_s, current(4,6) ) 
-                { 0 : GET_TYPE0 ; 1 : xxxxxx ; }
+parser start  {
+                extract ( L2_hdr    ) ; /* 0 */
+                extract ( L3_hdr[0] ) ; /* 1 */
+                extract ( L3_hdr[1] ) ; /* 2 */
+                return switch ( current(4,12), latest.jjj, L2_hdr.type0, L3_hdr[1].jjj ) 
+                /*                    304         02            00           02 = 12952141826*/
+                { 0           : GET_TYPE0 ; 
+                  1, 3 mask 7 : P4_PARSING_DONE ; 
+                  12952141826 : GET_TYPE1 ;
+                  default     : GET_TYPE0 ; 
+                }
               }
+
 parser GET_TYPE0 { extract ( Type_0_hdr ) ;
+                   return  P4_PARSING_DONE ; 
+                 }
+parser GET_TYPE1 { extract ( Type_1_hdr ) ;
                    return  P4_PARSING_DONE ; 
                  }
 """
         
-        exp_bytes_used = 2
-        pkt = [ i for i in range(2) ]
+        exp_bytes_used = 7
+        pkt = [ i for i in range(8) ]
 
         try:
 
@@ -390,7 +404,9 @@ parser GET_TYPE0 { extract ( Type_0_hdr ) ;
             self.assert_( num_bytes_used == exp_bytes_used, 
                       'Expected %d bytes consumed, Saw %d.' % (exp_bytes_used, num_bytes_used ))
             self.check_field( p4, 'L2_hdr.type0', 0x0 )
-            self.check_field( p4, 'Type_0_hdr.type1', 0x1 )
+            self.check_field( p4, 'L3_hdr[0].jjj', 0x1 )
+            self.check_field( p4, 'L3_hdr[1].jjj', 0x2 )
+            self.check_field( p4, 'Type_1_hdr.four', 0x3040506 )
 
         except GP4.GP4_Exceptions.RuntimeError,err:
             print "Unexpected Runtime Error:",err

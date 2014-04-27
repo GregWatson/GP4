@@ -48,6 +48,14 @@ class Field(AST_object):
         else: return None
 
 
+    ## Return actual bit width (not declared width)
+    # @param self  : object
+    # @returns width : Integer. width of this field.
+    def get_actual_width(self):
+        if self.is_valid: return self.valid_bits
+        else: return 0
+
+
     ## Convert field to a printable string
     # @param self  : object
     # @returns String representing field

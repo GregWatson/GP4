@@ -54,6 +54,9 @@ class Header_Stack(Header_Instance):
         """ index may be a number or 'next'.
             Create instance if it does not exist, IF it is the next to be created.
         """
+        if index != 'next' and index != 'last': index = int(index)
+
+
         # Create a new header_inst if index is next or else it is a value equal to
         # the next index to be used in the stack.
         if index == 'next' or index == len(self.stack):

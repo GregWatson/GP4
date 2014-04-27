@@ -72,7 +72,18 @@ class Bits(object):
     # @param bytes : [ integers ]
     def __init__(self, bytes):
         self.bytes = bytes[:]
-        self.bits_left  = 8  # bits left in first byte.
+        self.bits_left = 8 if len(self.bytes) else 0  # bits left in first byte.
+
+
+    ## Copy Bits object
+    # @param self: the original Bits object
+    # @return copy of self
+    def copy(self):
+        new = Bits([])
+        new.bytes     = self.bytes[:]
+        new.bits_left = self.bits_left
+        return new
+
 
     ## Extract num_to_get bits from the bytes array and return as integer.
     # @param self: Bits object
@@ -131,6 +142,19 @@ class Bits(object):
         return extracted_bits
 
         
+    ## Extract bit_width bits non-destructively, starting from bit_offset
+    # @param self: Bits object
+    # @param bit_offset : integer
+    # @param bit_width  : integer
+    # @return extracted_bits: Integer
+    def get_bit_field(self, bit_offset, bit_width):
+        tmp = self.copy()
+        if bit_offset: # discard bit_offset bits
+            (err, extracted_bits) = tmp.get_next_bits(bit_offset)
+        (err, extracted_bits) = tmp.get_next_bits(bit_width)
+        return extracted_bits
+
+
 
     ## Return string of first few bytes as hex str
     # @param self: the new Bits object

@@ -3,7 +3,7 @@
 ## @package GP4
 
 from GP4_Utilities  import *
-from GP4_Parser_Function_Code import gen_switch_exp_code
+from GP4_Parser_Function_Code import *
 from GP4_AST_object import AST_object
 import GP4_Exceptions
 import sys
@@ -56,7 +56,8 @@ class Parser_Function(AST_object):
         func_code = [ 
                      'def f(self, p4, bits):',
                      '    err = ""; total_bytes = 0; state=self.name',
-                     '    print "executing func",self.name'
+                     '    print "executing func",self.name',
+                     '    p4.latest = None'
                     ]
 
         for stmt in self.func_body_text: 
@@ -135,7 +136,7 @@ class Parser_Function(AST_object):
                 
         code = [ 'hdr_i = p4.get_or_create_hdr_inst("' + hdr_name + '", ' + index + ')',
                  'if not hdr_i: print "Error: header \'%s\' not found."' % hdr_name,
-                 'p4.extract(hdr_i, bits)' ]
+                 'p4.extract_hdr(hdr_i, bits)' ]
         # print code
         return ('', code)
 
@@ -228,6 +229,19 @@ class Parser_Function(AST_object):
 
         # Generate code that evaluates switch_expr and puts value in 'sw_exp_val'
         codeL = gen_switch_exp_code(switch_exp, p4, 'sw_exp_val')
+        # codeL.append('print "sw val is 0x%x" % sw_exp_val')
+        
+        # Now compare the value in sw_exp_val to the various jump options.
+        seen_default = False
+        is_first = True
+        for c_e in case_entries:
+            if seen_default:
+                return('"default" must be last entry in return switch.',codeL)
+            is_default, c_e_code = gen_switch_case_entry_code(c_e, p4, 'sw_exp_val', is_first)
+            seen_default = is_default
+            codeL.extend(c_e_code)
+            is_first = False
+        codeL.append("('',0,next_state)")
 
         return ('', codeL)
 

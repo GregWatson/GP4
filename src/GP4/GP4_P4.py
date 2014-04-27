@@ -17,9 +17,13 @@ class P4(object):
         self.header_insts = {} # maps inst name of header_inst to header_inst or header_stack object
         self.parser_functions = {} # maps parser function name (string) to parse function object
 
-
         # run time fields
         self.hdr_extraction_order = []  # list of header objects in the order they were extracted.
+        self.latest = None  # latest extracted header in a parser function.
+
+
+    
+
 
     ## Add a new object (e.g. header_decl) to self.
     # @param self : P4 object
@@ -76,6 +80,7 @@ class P4(object):
     # @return parser_function object or None
     def get_parse_function(self, func_name):
         return self.parser_functions.get(func_name)
+
 
 
     ## Returns the actual named header instance (or stack) or None.
@@ -153,8 +158,7 @@ class P4(object):
     # @param self : P4 object
     # @returns None
     def initialize_packet_parser(self):
-        self.hdr_extraction_order = [] 
-
+        self.hdr_extraction_order = []
 
 
     ## Extracts the fields for the specified header from the given Bits object
@@ -162,7 +166,7 @@ class P4(object):
     # @param hdr  : hdr instance
     # @param bits : Bits object
     # @returns (err, bytes_used, state). return state is just ''
-    def extract(self, hdr, bits):
+    def extract_hdr(self, hdr, bits):
         print "extract bits to hdr",hdr.hdr_inst_name
         err = ''
         bits_used  = 0
@@ -180,9 +184,10 @@ class P4(object):
             bits_used += num_bits
 
 
-        print "extracted",bits_used/8,"bits"
+        print "extracted",bits_used,"bits."
         print hdr
         self.hdr_extraction_order.append(hdr)
+        self.latest = hdr
 
         return (err, bits_used/8, '')
 
@@ -201,6 +206,56 @@ class P4(object):
         hdr.set_field(field_name, val)
         return('', 0, '')
 
+
+    ## Set the specified field in given hdr object to given value
+    # @param self : P4 object
+    # @param sw_field_ref : List of strings for switc_field_ref
+    # @param bits : Bits object
+    # @returns (field_value, field_width) both Integers
+    def get_sw_field_ref_value_and_width(self, sw_field_ref, bits):
+        """ switch field ref can be such as:
+            - normal field ref: ['L3_hdr', '2', 'jjj']
+            - latest: ['latest.', 'field_s']
+            - raw bits: ['current', '4', '6']
+        """
+        assert len(sw_field_ref)
+
+        if sw_field_ref[0] == 'current': # raw bits, bit_offset, bit_width
+            assert len(sw_field_ref) == 3
+            bit_offset, bit_width = (int(sw_field_ref[1]), int(sw_field_ref[2]))
+            field_value = bits.get_bit_field(bit_offset, bit_width)
+
+        elif  sw_field_ref[0] == 'latest.': # latest.<field_name>
+            assert len(sw_field_ref) == 2
+            field_name = sw_field_ref[1]
+            if not self.latest:
+                raise RuntimeError,"'latest' header has not been extracted: latest.%s" % field_name
+            # check field name is valid for 'latest'
+            if not self.latest.field_has_value(field_name):
+                raise RuntimeError,"Field 'latest.%s' has no value (was not extracted?)" % field_name
+            field_value = self.latest.get_field(field_name)
+            bit_width   = self.latest.get_field_width(field_name)
+
+        else:
+            # Normal field ref
+            hdr_name  = sw_field_ref[0]
+            if len(sw_field_ref) > 2:   # index supplied
+                hdr_index  = sw_field_ref[1]
+                field_name = sw_field_ref[2]
+            else:
+                hdr_index  = ''
+                field_name = sw_field_ref[1]
+            hdr_i = self.get_or_create_hdr_inst(hdr_name, hdr_index)
+            if not hdr_i: 
+                raise RuntimeError,"Unknown Header '%s' used in switch return." % hdr_name
+            if not hdr_i.field_has_value(field_name):
+                raise RuntimeError,"Field '%s.%s' is not valid." % (hdr_name, field_name)
+
+            field_value = hdr_i.get_field(field_name)
+            bit_width   = hdr_i.get_field_width(field_name)
+
+        print "get_sw_field_ref_value_and_width(", sw_field_ref,") got",bit_width,"bits: 0x%x" % field_value
+        return(field_value, bit_width)
 
 
 

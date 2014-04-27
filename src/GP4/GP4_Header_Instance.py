@@ -48,6 +48,15 @@ class Header_Instance(AST_object):
         return ''
 
 
+    ## Return bool indicating if specified field name is valid (has value)
+    # @param self : object
+    # @param String: field_name
+    # @returns Bool
+    def field_has_value(self, field_name):
+        for f in self.fields:
+            if f.name == field_name: return f.is_valid
+        return False
+
 
 
     ## Set field to given value
@@ -78,6 +87,18 @@ class Header_Instance(AST_object):
                 return self.fields[ix].get_value()
 
         return None
+
+    ## Get bit width of field
+    # @param self : object
+    # @param field_name : String
+    # @return val : Integer
+    def get_field_width(self, field_name): 
+
+        for ix,fname in enumerate(self.field_names):
+            if fname == field_name:
+                return self.fields[ix].get_actual_width()
+
+        return 0
 
 
     ## Return the name of the declaration for this instance
