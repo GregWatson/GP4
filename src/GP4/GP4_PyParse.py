@@ -90,8 +90,9 @@ def new_GP4_parser() :
 
     index = ( value | Literal('Last') )
 
-    header_ref = Group (    instance_name 
-                         | ( instance_name + LBRACK + index + RBRACK ) 
+    header_ref = Group ( 
+                           ( instance_name + LBRACK + index + RBRACK ) 
+                         |   instance_name 
                        )
 
     field_ref  = Group ( header_ref + Suppress('.') + field_name )
@@ -101,10 +102,11 @@ def new_GP4_parser() :
     parser_state_name = Word(alphas,alphanums+'_')
     mask_value        = Word(nums)
 
-    switch_field_ref = Group (   field_ref 
-                               | ( Literal('latest.') + field_name ) 
+    switch_field_ref = Group (  
+                                 ( Literal('latest.') + field_name ) 
                                | (   Literal('current') 
                                    + LPAREN + value + COMMA + value + RPAREN )
+                               | field_ref 
                              )
 
     switch_exp = Group ( delimitedList( switch_field_ref ) )

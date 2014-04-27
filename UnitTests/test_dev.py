@@ -363,13 +363,16 @@ parser GET_META  { set_metadata ( meta_hdr.number, 1234 ) ;
 
         program = """
 header L2_def { fields { type0: 8; }    }
+header L3_def { fields { jjj: 8;   }    }
 header Type_0 { fields { type1: 8; }    }
 
 L2_def    L2_hdr;
+L3_def    L3_hdr[3];
 Type_0    Type_0_hdr;
 
 parser start  { extract ( L2_hdr ) ; 
-                return switch ( L2_hdr.type0, zzz.jjj ) { 0 : GET_TYPE0 ; 1 : xxxxxx ; }
+                return switch ( L2_hdr.type0, L3_hdr[2].jjj,  latest.field_s, current(4,6) ) 
+                { 0 : GET_TYPE0 ; 1 : xxxxxx ; }
               }
 parser GET_TYPE0 { extract ( Type_0_hdr ) ;
                    return  P4_PARSING_DONE ; 

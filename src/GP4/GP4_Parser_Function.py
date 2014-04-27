@@ -227,11 +227,7 @@ class Parser_Function(AST_object):
         for el in case_entries: print "\t",el[0],"->",el[1]
 
         # Generate code that evaluates switch_expr and puts value in 'sw_exp_val'
-        try:
-            codeL = gen_switch_exp_code(switch_exp, p4, 'sw_exp_val')
-        except:
-            sys.exit(1)
-
+        codeL = gen_switch_exp_code(switch_exp, p4, 'sw_exp_val')
 
         return ('', codeL)
 
