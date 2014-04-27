@@ -1,3 +1,5 @@
+-switch return tests: check 'default' and check mask
+
 - modify error handling to use try/exception
 
 - handle return switch in parser functions
