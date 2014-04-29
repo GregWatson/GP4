@@ -80,10 +80,10 @@ class Parser_Function(AST_object):
 
         try:
             exec text
-        except Exception as e:
-            print "Error: generated code for python function yielded exception:",e
+        except Exception as ex_err:
+            print "Error: generated code for python function yielded exception:",ex_err
             print "code was <\n",text,"\n>\n"
-            raise GP4_Exceptions.RuntimeError,[e]
+            raise GP4_Exceptions.RuntimeError, ex_err
 
         self.func = f
         return err
@@ -195,7 +195,12 @@ class Parser_Function(AST_object):
 
            stmt is ['return_prsr_state', 'DO_L9']
         """
-        code = '("", 0, "' + stmt[1] + '")'
+        next_state = stmt[1]
+        if not p4.get_parse_function(next_state):
+            raise GP4_Exceptions.SyntaxError, \
+                "Parser function specified 'return %s' but function '%s' is not defined." % \
+                    (next_state, next_state) 
+        code = '("", 0, "' + next_state + '")'
         return ('', [code])
 
 

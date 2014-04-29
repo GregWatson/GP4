@@ -1,6 +1,6 @@
 # GP4_Packet_Parser.py - runtime packet parser.
 #
-# This will actualy parse a packet and populate the header instances 
+# This will actually parse a packet and populate the header instances 
 # as determined by the parser functions.
 #
 ## @package GP4
@@ -32,13 +32,13 @@ def parse_packet(p4, pkt, init_state):
 
         parse_func = p4.get_parse_function(state)
         if not parse_func:
-            return ('Parse function (state) "%s" not found' % state, bytes_used)
+            raise  GP4_Exceptions.RuntimeError , 'Parse function (state) "%s" not found' % state
 
         (err, new_bytes_used, state) = parse_func.execute( p4, bits)
 
         bytes_used += new_bytes_used
         if err: 
-            raise  GP4_Exceptions.RuntimeError ([err])
+            raise  GP4_Exceptions.RuntimeError, err
 
 
     print "After parsing, the following headers are defined:"

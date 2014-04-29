@@ -98,13 +98,13 @@ class P4(object):
             stack = self.header_insts.get(hdr_name)
             if not stack: 
                 raise GP4_Exceptions.RuntimeError, \
-                         [ 'Error: stack %s not found.' % hdr_name ]
+                         'Error: stack %s not found.' % hdr_name 
             if stack.typ != 'header_stack':
                 raise GP4_Exceptions.RuntimeError, \
-                         ['Error: Header inst "%s" is not a stack.' % hdr_name ]
+                         'Error: Header inst "%s" is not a stack.' % hdr_name
             h_inst = stack.get_or_create_indexed_instance(index)
             if not h_inst:
-                raise GP4_Exceptions.RuntimeError,"stack error: " + hdr_name
+                raise GP4_Exceptions.RuntimeError, "stack error: " + hdr_name
             return h_inst
 
 

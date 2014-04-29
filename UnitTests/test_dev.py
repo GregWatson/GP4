@@ -207,7 +207,7 @@ parser DO_L2  { extract ( L2_hdr[next] ) ;
         try:
             (p4, err, num_bytes_used ) = parse_and_run_test(program, pkt, init_state='start', debug=debug)
         except GP4.GP4_Exceptions.RuntimeError,err:
-            print "RUntime Error was expected"
+            print "Runtime Error was expected"
 
 
 
@@ -231,7 +231,9 @@ parser start  { extract ( L2_hdr[2] ) ;  /* out of range */
             (p4, err, num_bytes_used ) = parse_and_run_test(program, pkt, init_state='start', debug=debug)
         except GP4.GP4_Exceptions.RuntimeError,err:
             print "Runtime Error was expected."
-            print err[0][0]
+            print err
+
+
 
     """ Test parser. run time stack err ------------------------------------------------------------"""
     def test5b(self, debug=1):
@@ -254,8 +256,27 @@ parser P4_ERR { extract ( L2_hdr[next] ) ;  /* out of range */
         pkt = [ i for i in range(20) ]
         try:
             (p4, err, num_bytes_used ) = parse_and_run_test(program, pkt, init_state='start', debug=debug)
-        except GP4.GP4_Exceptions.RuntimeError,err:
-            print "Runtime Error was expected."
+        except GP4.GP4_Exceptions.RuntimeError, ex_err:
+            print "Runtime Error was expected:", ex_err
+
+
+
+
+    """ Test parser. bad return state err ------------------------------------------------------------"""
+    def test5c(self, debug=1):
+
+        program = """
+header L2_def {    fields { DA : 48; SA : 48; }   }
+L2_def L2_hdr[1];
+parser start  { extract ( L2_hdr[0] ) ;
+                return P4_ERR ;
+              }
+"""
+        pkt = [ i for i in range(20) ]
+        try:
+            (p4, err, num_bytes_used ) = parse_and_run_test(program, pkt, init_state='start', debug=debug)
+        except GP4.GP4_Exceptions.SyntaxError as ex_err:
+            print "test5c: SyntaxError was expected:", ex_err
 
 
 
@@ -424,5 +445,5 @@ if __name__ == '__main__':
     #        python -m unittest discover
 
     single = unittest.TestSuite()
-    single.addTest( test_dev('test8' ))
+    single.addTest( test_dev('test5c' ))
     unittest.TextTestRunner().run(single)

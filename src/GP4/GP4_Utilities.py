@@ -39,7 +39,7 @@ def show_source_loc(string, loc):
 def print_syntax_err(err_msg, string='', loc=0):
     print "Syntax Error:",err_msg
     if string: show_source_loc(string, loc)
-    raise GP4_Exceptions.SyntaxError('')
+    raise GP4_Exceptions.SyntaxError, ''
 
 ## Convert hdr ref PyParsing object to string
 # @param hdr_ref : PyParsing object
