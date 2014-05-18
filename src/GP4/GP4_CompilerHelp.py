@@ -30,8 +30,7 @@ def compile_string(program, debug=0, ):
     except ParseException as err:
 
         show_source_loc(err.line, err.column)
-        print err
-        raise GP4_Exceptions.SyntaxError, err
+        raise GP4_Exceptions.SyntaxError, "Syntax error line %s  column %s" % (str(err.line), str(err.column))
 
     # Compile the parse tree
 

@@ -36,7 +36,7 @@ class Parser_Function(AST_object):
 
         # If we have not yet compiled the function then do so in context of the P4 object
         if not self.func: 
-            err = self.compile_func(p4)
+            err,code = self.compile_func(p4)
             if err: return(err,0,self.name)
 
         return self.func(self, p4, bits)
@@ -44,7 +44,7 @@ class Parser_Function(AST_object):
     ## Compile the function in the context of a P4 object (namespace)
     # @param self : object
     # @param p4   : P4 object
-    # @returns err
+    # @returns err, code
     def compile_func(self, p4):
         """ The function code has signature:
             (err, bytes_used, state) = func( p4, bits)
@@ -81,12 +81,12 @@ class Parser_Function(AST_object):
         try:
             exec text
         except Exception as ex_err:
-            print "Error: generated code for python function yielded exception:",ex_err
+            print "Error: generated code for python function yielded exception:",ex_err.data
             print "code was <\n",text,"\n>\n"
-            raise GP4_Exceptions.RuntimeError, ex_err
+            raise GP4_Exceptions.RuntimeError, ex_err.data
 
         self.func = f
-        return err
+        return err,''
 
     ## Compile a single statement and return the text for that statement as a string
     # @param self : object

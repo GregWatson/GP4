@@ -229,9 +229,9 @@ parser start  { extract ( L2_hdr[2] ) ;  /* out of range */
         pkt = [ i for i in range(20) ]
         try:
             (p4, err, num_bytes_used ) = parse_and_run_test(program, pkt, init_state='start', debug=debug)
-        except GP4.GP4_Exceptions.RuntimeError,err:
+        except GP4.GP4_Exceptions.RuntimeError as err:
             print "Runtime Error was expected."
-            print err
+            print err.data
 
 
 
@@ -276,7 +276,7 @@ parser start  { extract ( L2_hdr[0] ) ;
         try:
             (p4, err, num_bytes_used ) = parse_and_run_test(program, pkt, init_state='start', debug=debug)
         except GP4.GP4_Exceptions.SyntaxError as ex_err:
-            print "test5c: SyntaxError was expected:", ex_err
+            print "test5c: SyntaxError was expected:", ex_err.args
 
 
 
@@ -435,6 +435,53 @@ parser GET_TYPE1 { extract ( Type_1_hdr ) ;
 
 
 
+    """ Test parser switch return default ------------------------------------------------------------"""
+    def test8a(self, debug=1):
+
+        program = """
+header L2_def  { fields { type0: 8; }    }
+header bad_def { fields { jjj: 8;   }    }
+header Type_1  { fields { four: 32; }    }
+
+L2_def    L2_hdr;
+bad_def   bad_hdr;
+Type_1    Type_1_hdr;
+
+parser start  {
+                extract ( L2_hdr    ) ; /* 5 */
+                return switch ( L2_hdr.type0 ) 
+                { 0,1,2,3,4, 6,7,8,9,10 : BAD ; 
+                  default               : GET_NEXT4 ; 
+                }
+              }
+
+parser BAD { extract ( bad_hdr ) ;
+                   return  BAD ; 
+           }
+parser GET_NEXT4 { extract ( Type_1_hdr ) ;
+                   return  P4_PARSING_DONE ; 
+                 }
+"""
+        
+        exp_bytes_used = 5
+        pkt = [ 5+i for i in range(8) ]
+
+        try:
+
+            (p4, err, num_bytes_used ) = parse_and_run_test(program, pkt, init_state='start', 
+                                                        debug=debug)
+            self.assert_( err=='', 'Saw parse runtime err:' + str(err) )
+            self.assert_( num_bytes_used == exp_bytes_used, 
+                      'Expected %d bytes consumed, Saw %d.' % (exp_bytes_used, num_bytes_used ))
+            self.check_field( p4, 'L2_hdr.type0', 0x5 )
+            self.check_field( p4, 'Type_1_hdr.four', 0x6070809 )
+
+        except GP4.GP4_Exceptions.RuntimeError,err:
+            print "Unexpected Runtime Error:",err
+            self.assert_(False)
+
+
+
 
 
 
@@ -444,6 +491,22 @@ if __name__ == '__main__':
     # can run all tests in dir via:
     #        python -m unittest discover
 
-    single = unittest.TestSuite()
-    single.addTest( test_dev('test5c' ))
-    unittest.TextTestRunner().run(single)
+    if (True):
+        single = unittest.TestSuite()
+        single.addTest( test_dev('test8a' ))
+        unittest.TextTestRunner().run(single)
+
+    else:
+        program = """
+header L2_def {    fields { DA : 48; SA : 48; }   }
+L2_def L2_hdr[1];
+parser start  { extract ( L2_hdr[0] ) ;
+                return P4_ERR ;
+              }
+"""
+        pkt = [ i for i in range(20) ]
+        try:
+            (p4, err, num_bytes_used ) = parse_and_run_test(program, pkt, init_state='start', debug=0)
+        except GP4.GP4_Exceptions.SyntaxError as ex_err:
+            print "test5c: SyntaxError was expected:", ex_err.args
+            print "len args is",len(ex_err.args)

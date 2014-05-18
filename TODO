@@ -1,4 +1,4 @@
--switch return tests: check 'default' and check mask
+-switch return tests: check 'mask'
 
 - modify error handling to use try/exception
 
@@ -12,5 +12,6 @@
 DONE
 - handle set_metadata
 - Tests must check extracted hdrs to verify values.
+-switch return tests: check 'default' 
 
 
