@@ -177,7 +177,10 @@ class P4(object):
 
         for f in hdr.fields:
             num_bits        = int(f.bit_width)
-            assert num_bits > 0,"fixme: variable bit width not implemented"
+
+            if num_bits == 0 : # Need to compute length expression for header.
+                num_bits = hdr.compute_remaining_header_length_bits(self)
+
             err, field_bits = bits.get_next_bits(num_bits)
             if err: return(err, bits_used/8, '')
             f.set_value(field_bits, num_bits)

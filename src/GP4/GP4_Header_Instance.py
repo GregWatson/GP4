@@ -4,6 +4,7 @@
 
 from GP4_Utilities  import print_syntax_err
 from GP4_AST_object import AST_object
+import GP4_Exceptions
 
 class Header_Instance(AST_object):
 
@@ -27,7 +28,7 @@ class Header_Instance(AST_object):
         self.fields_created = False   # Bool. Set when fields are actually created (extracted)
         self.fields         = []      # ordered list of Field objects
         self.field_names    = []      # ordered list of field names
-
+        self.compute_length = None    # Function to compute length of header. Built at run time.
 
 
     ## Instantiate the actual fields from the header_decl
@@ -46,7 +47,6 @@ class Header_Instance(AST_object):
 
         print "Created fields for",self.hdr_inst_name
         return ''
-
 
     ## Return bool indicating if specified field name is valid (has value)
     # @param self : object
@@ -99,6 +99,91 @@ class Header_Instance(AST_object):
                 return self.fields[ix].get_actual_width()
 
         return 0
+
+
+
+    ## Compute 'length' expression for this hdr. Return how many bits not already extracted.
+    # @param self : object
+    # @param p4   : P4 object
+    # @return val : Integer
+    def compute_remaining_header_length_bits(self, p4):
+        print "compute_remaining_header_length"
+        if not self.compute_length:
+            self.compile_compute_length(p4)
+        length = 8 * self.compute_length(self, p4)
+        print "compute_length returned length of ",length
+
+        current_length = self.compute_current_bit_length()
+
+        # If max_length was specified then check it.
+        decl = p4.get_header_decl(self.hdr_type_name)
+        if not decl:
+            raise GP4_Exceptions.RuntimeError, \
+            'Unknown header declaration "%s" referenced by header instance "%s"' % \
+                    (self.hdr_type_name, self.hdr_inst_name) 
+        if decl.max_length:
+            if current_length > (8*decl.max_length):
+                raise GP4_Exceptions.RuntimeParseError, \
+                    "Header %s: max_length of %d exceeded: already extracted %d bytes." % \
+                        ( self.hdr_inst_name,  decl.max_length, current_length/8 )
+
+        if current_length >= length: return 0
+        return length - current_length
+
+
+
+    ## Compile the 'length' expression for this hdr
+    # @param self : object
+    # @param p4   : P4 object
+    # @return None
+    def compile_compute_length(self, p4):
+        """ Get the length expression from the hdr decl, and build a python
+            function from it.
+        """
+        decl = p4.get_header_decl(self.hdr_type_name)
+        if not decl:
+            raise GP4_Exceptions.RuntimeError, \
+            'Unknown header declaration "%s" referenced by header instance "%s"' % \
+                    (self.hdr_type_name, self.hdr_inst_name) 
+        len_expr = decl.get_flattened_length_expr()
+        expr = len_expr.split()
+
+        code = 'def f(self,p4): return ( '
+
+        for atom in expr:
+            if atom[0].isalpha() :  # field
+                if not atom in self.field_names:
+                    raise GP4_Exceptions.SyntaxError, \
+                        "Error: Hdr_decl %s: length expression uses field '%s' which is not in declaration"%\
+                        (decl.name, atom)
+                code += 'self.get_field("%s")' % atom
+            else: # value of operator
+                if atom[0].isdigit():
+                    code += atom
+                else:
+                    code += ' ' + atom + ' '
+        code += ' )'
+    
+        print "code is:",code
+
+        # Now compile the code
+        try:
+            exec code
+        except Exception as ex_err:
+            print "Error: generated code for python function yielded exception:",ex_err.data
+            print "code was <\n",code,"\n>\n"
+            raise GP4_Exceptions.RuntimeError, ex_err.data
+                
+
+        self.compute_length = f  # f is the function we just created
+        return
+
+
+    ## Compute the length (bits) of all headers already extracted.
+    # @param self : object
+    # @return val : Integer
+    def compute_current_bit_length(self):
+        return sum([f.valid_bits for f in self.fields])
 
 
     ## Return the name of the declaration for this instance

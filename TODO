@@ -1,17 +1,18 @@
--switch return tests: check 'mask'
+Implement : Packet Processing and Control Flow
 
-- modify error handling to use try/exception
+Implement : Table Declaration
 
-- handle return switch in parser functions
-
-- Compile 'length' definitions
-
-- Handle '*' in bit_width   (requires 'length' to be handled.)
-
+Implement : Action Definitions
+ 
 
 DONE
 - handle set_metadata
 - Tests must check extracted hdrs to verify values.
--switch return tests: check 'default' 
+- switch return tests: check 'default' 
+- switch return tests: check 'mask'
+- handle return switch in parser functions
+- Compile 'length' definitions
+- Handle '*' in bit_width   (requires 'length' to be handled.)
+- Handle max_length
 
 

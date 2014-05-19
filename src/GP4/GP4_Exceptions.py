@@ -22,3 +22,7 @@ class InsufficientBytesRuntimeError(exceptions.Exception):
     def __init__(self, args = None):
         self.data = args
 
+class RuntimeParseError(exceptions.Exception):
+    def __init__(self, args = None):
+        self.data = args
+

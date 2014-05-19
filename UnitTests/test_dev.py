@@ -435,7 +435,7 @@ parser GET_TYPE1 { extract ( Type_1_hdr ) ;
 
 
 
-    """ Test parser switch return default ------------------------------------------------------------"""
+    """ Test parser switch return default ---------------------------------------------"""
     def test8a(self, debug=1):
 
         program = """
@@ -483,6 +483,142 @@ parser GET_NEXT4 { extract ( Type_1_hdr ) ;
 
 
 
+    """ Test parser switch return default ---------------------------------------------"""
+    def test8b(self, debug=1):
+
+        program = """
+header L2_def  { fields { type0: 8; }    }
+header bad_def { fields { jjj: 8;   }    }
+header Type_1  { fields { four: 32; }    }
+
+L2_def    L2_hdr;
+bad_def   bad_hdr;
+Type_1    Type_1_hdr;
+
+parser start  {
+                extract ( L2_hdr    ) ; /* 5 */
+                return switch ( L2_hdr.type0 ) 
+                { 4 mask 6 : SECOND ; 
+                  default  : BAD   ; 
+                }
+              }
+
+parser BAD { extract ( bad_hdr ) ;
+                   return  BAD ; 
+           }
+parser SECOND { extract ( Type_1_hdr ) ;
+                return  P4_PARSING_DONE ; 
+              }
+"""
+        
+        exp_bytes_used = 5
+        pkt = [ 5+i for i in range(8) ]
+
+        try:
+
+            (p4, err, num_bytes_used ) = parse_and_run_test(program, pkt, init_state='start', 
+                                                        debug=debug)
+            self.assert_( err=='', 'Saw parse runtime err:' + str(err) )
+            self.assert_( num_bytes_used == exp_bytes_used, 
+                      'Expected %d bytes consumed, Saw %d.' % (exp_bytes_used, num_bytes_used ))
+            self.check_field( p4, 'L2_hdr.type0', 0x5 )
+            self.check_field( p4, 'Type_1_hdr.four', 0x6070809 )
+
+        except GP4.GP4_Exceptions.RuntimeError,err:
+            print "Unexpected Runtime Error:",err
+            self.assert_(False)
+
+
+
+
+    """ Test use of length "*" in header decl  ---------------------------------------------"""
+    def test9(self, debug=1):
+
+        program = """
+header L2_def  { fields { len: 8;
+                          other: 16; 
+                          data: *;
+                        }
+                 length (len * 2)>>1 + 1 - 1 ;
+                 max_length 10;
+               }  
+
+L2_def    L2_hdr;
+
+parser start  {
+                extract ( L2_hdr ) ; 
+                return  P4_PARSING_DONE ; 
+              }
+"""
+        
+        exp_bytes_used = 10
+        pkt = [ 10+i for i in range(10) ]
+
+        try:
+
+            (p4, err, num_bytes_used ) = parse_and_run_test(program, pkt, init_state='start', 
+                                                        debug=debug)
+            self.assert_( err=='', 'Saw parse runtime err:' + str(err) )
+            self.assert_( num_bytes_used == exp_bytes_used, 
+                      'Expected %d bytes consumed, Saw %d.' % (exp_bytes_used, num_bytes_used ))
+            self.check_field( p4, 'L2_hdr.len', 10 )
+            self.check_field( p4, 'L2_hdr.other', 0xb0c )
+            self.check_field( p4, 'L2_hdr.data', 0xd0e0f10111213 )
+
+        except GP4.GP4_Exceptions.RuntimeError as err:
+            print "Unexpected Runtime Error:",err.data
+            self.assert_(False)
+        except GP4.GP4_Exceptions.SyntaxError as err:
+            print "Unexpected Runtime Error:",err.data
+            self.assert_(False)
+        except GP4.GP4_Exceptions.RuntimeParseError as err:
+            print "Unexpected Runtime Parse Error:",err.data
+            self.assert_(False)
+
+
+
+    """ Test use of length "*" in header decl  ---------------------------------------------"""
+    def test9a(self, debug=1):
+
+        program = """
+header L2_def  { fields { len: 8;
+                          other: 16; 
+                          data: *;
+                        }
+                 length (len * 2)>>1 + 1 - 1 ;
+                 max_length 1;
+               }  
+
+L2_def    L2_hdr;
+
+parser start  {
+                extract ( L2_hdr ) ; 
+                return  P4_PARSING_DONE ; 
+              }
+"""
+        
+        exp_bytes_used = 10
+        pkt = [ 10+i for i in range(10) ]
+
+        try:
+
+            (p4, err, num_bytes_used ) = parse_and_run_test(program, pkt, init_state='start', 
+                                                        debug=debug)
+            self.assert_( False )  # should have exception raised
+
+        except GP4.GP4_Exceptions.RuntimeError as err:
+            print "Unexpected Runtime Error:",err.data
+            self.assert_(False)
+        except GP4.GP4_Exceptions.SyntaxError as err:
+            print "Unexpected Runtime Error:",err.data
+            self.assert_(False)
+        except GP4.GP4_Exceptions.RuntimeParseError as err:
+            print "Good: Expected Runtime Parse Error:",err.data
+            self.assert_(True)
+
+
+
+
 
 
 
@@ -493,7 +629,7 @@ if __name__ == '__main__':
 
     if (True):
         single = unittest.TestSuite()
-        single.addTest( test_dev('test8a' ))
+        single.addTest( test_dev('test9a' ))
         unittest.TextTestRunner().run(single)
 
     else:

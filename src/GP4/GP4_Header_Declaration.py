@@ -64,7 +64,7 @@ class Header_Declaration(AST_object):
                 assert len(opt)>1  # [0]=opt name, [1] = value
                 opt_name = opt[0]
                 if opt_name == 'length':
-                    self.length_expr = opt[1]
+                    self.length_expr = opt[1:]
                 if opt_name == 'max_length':
                     self.max_length = int(opt[1])
 
@@ -81,12 +81,36 @@ class Header_Declaration(AST_object):
 
 
 
-    ## Return bool indicating id specified field name is in this declaration
+    ## Return string of 'length' expression (i.e. flatten it)
+    # @param self : object
+    # @returns String
+    def get_flattened_length_expr(self):
+        return self.flatten_length_expr(self.length_expr)
+
+    ## Given pyparsing length_exp object, flatten it to a string
+    # @param self : object
+    # @param expr : pyparsing length_exp object
+    # @returns String
+    def flatten_length_expr(self, expr):
+        if type(expr) == type('s'): return expr
+        if type(expr) == type((1,1)): # tuple
+            return self.flatten_length_expr(expr[0])
+        else:
+            code = '('
+            for el in expr: 
+                code += ' ' + self.flatten_length_expr(el)
+            return code + ' )'
+
+
+    ## Return bool indicating if specified field name is in this declaration
     # @param self : object
     # @param String: field_name
     # @returns Bool
     def is_legal_field(self, field_name):
         return field_name in self.field_names 
+
+
+
 
 
 
