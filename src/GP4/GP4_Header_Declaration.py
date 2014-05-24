@@ -64,7 +64,7 @@ class Header_Declaration(AST_object):
                 assert len(opt)>1  # [0]=opt name, [1] = value
                 opt_name = opt[0]
                 if opt_name == 'length':
-                    self.length_expr = opt[1:]
+                    self.length_expr = opt.asList()[1:]
                 if opt_name == 'max_length':
                     self.max_length = int(opt[1])
 
@@ -85,20 +85,21 @@ class Header_Declaration(AST_object):
     # @param self : object
     # @returns String
     def get_flattened_length_expr(self):
-        return self.flatten_length_expr(self.length_expr)
+        return self.flatten_expr(self.length_expr)
 
-    ## Given pyparsing length_exp object, flatten it to a string
+    ## Given list of strings or lists of strings, etc., flatten it to a string.
     # @param self : object
-    # @param expr : pyparsing length_exp object
+    # @param expr : list of strings or more lists of strings
     # @returns String
-    def flatten_length_expr(self, expr):
-        if type(expr) == type('s'): return expr
-        if type(expr) == type((1,1)): # tuple
-            return self.flatten_length_expr(expr[0])
+    def flatten_expr(self, expr):
+        if type(expr) == type('s'): 
+            return expr
         else:
+            if len(expr)==1: 
+                return self.flatten_expr(expr[0])
             code = '('
             for el in expr: 
-                code += ' ' + self.flatten_length_expr(el)
+                code += ' ' + self.flatten_expr(el)
             return code + ' )'
 
 

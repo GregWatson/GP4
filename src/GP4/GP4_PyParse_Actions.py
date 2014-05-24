@@ -7,6 +7,7 @@ import GP4_Field
 import GP4_Header_Instance
 import GP4_Header_Stack
 import GP4_Parser_Function
+import GP4_Control_Function
 
 from GP4_Utilities import *
 import sys
@@ -110,5 +111,24 @@ def do_parser_function(string, loc, toks):
     name      = fun[0]
     func_body = fun[1]
     return [ GP4_Parser_Function.Parser_Function(
+                string, loc, name, func_body 
+            ) ]
+
+
+## construct a Control Function object
+# @param string : String.  Source text
+# @param loc    : Integer. location in text of this object
+# @param string : Tokens.  List of tokens representing this object.
+# @return new token containing the constructed object.
+def do_control_function(string, loc, toks):
+    print "control_function:", toks
+    
+    my_toks = toks.asList()
+    assert len(my_toks)==1
+    fun = my_toks[0]
+    assert len(fun)==2  # name , body
+    name      = fun[0]
+    func_body = fun[1]
+    return [ GP4_Control_Function.Control_Function(
                 string, loc, name, func_body 
             ) ]

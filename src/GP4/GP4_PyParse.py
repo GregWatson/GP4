@@ -28,11 +28,11 @@ def new_GP4_parser() :
 
     atom  = value | field_name
 
-    length_exp = operatorPrecedence( atom,
+    length_exp = operatorPrecedence( atom,  # highest precedence first
                             [
-                             (shiftOp, 2, opAssoc.LEFT),
                              (multOp,  2, opAssoc.LEFT),
                              (plusOp,  2, opAssoc.LEFT),
+                             (shiftOp, 2, opAssoc.LEFT),
                             ] )
 
     field_mod = Literal('signed') | Literal('saturating')
@@ -164,6 +164,74 @@ def new_GP4_parser() :
 
     parser_function.setParseAction ( do_parser_function )
 
+
+    # --- Control function ------------------------------------
+
+    control_fn_name = Word( alphas,alphanums+'_' )
+    table_name      = Word( alphas,alphanums+'_' )
+
+    unOp       = oneOf('~ -')
+    binOp_and  = Literal('&')
+    binOp_xor  = Literal('^')
+    binOp_or   = Literal('|')
+
+    exp_atom  = value | field_ref 
+
+    exp = operatorPrecedence( exp_atom,    # highest precedence first
+                            [
+                             (unOp,       1, opAssoc.RIGHT),
+                             (multOp,     2, opAssoc.LEFT),
+                             (plusOp,     2, opAssoc.LEFT),
+                             (shiftOp,    2, opAssoc.LEFT),
+                             (binOp_and,  2, opAssoc.LEFT),
+                             (binOp_xor,  2, opAssoc.LEFT),
+                             (binOp_or,   2, opAssoc.LEFT),
+                            ] )
+
+    valid_header_ref = Suppress('valid') + LPAREN + header_ref + RPAREN
+    
+    relOp      = oneOf('> >= == <= < !=')
+    exp_rel_op = Group( exp + relOp + exp )
+
+    bool_expr_atom = valid_header_ref | exp_rel_op | oneOf('True False')
+
+    boolOp_not = Literal('not')
+    boolOp_and = Literal('and')
+    boolOp_or  = Literal('or')
+
+    bool_expr  = operatorPrecedence( bool_expr_atom, # highest precedence first
+        [
+            ( boolOp_not,  1, opAssoc.RIGHT),
+            ( boolOp_and,  2, opAssoc.LEFT),
+            ( boolOp_or,   2, opAssoc.LEFT),
+        ] )
+
+    control_statement = Forward()
+
+    else_statement = Suppress('else') + LBRACE + Group ( OneOrMore( control_statement ) ) + RBRACE
+
+    if_else_statement = Group ( Literal('if') + LPAREN + bool_expr + RPAREN
+                                + LBRACE + Group ( OneOrMore( control_statement ) ) + RBRACE
+                                + Optional(else_statement) )
+    
+    apply_table_statement = Group (  Literal('apply_table') 
+                                   + LPAREN + table_name + RPAREN + SEMICOLON
+                                  )
+
+    apply_control_function_statement = Group ( control_fn_name +   LPAREN + RPAREN + SEMICOLON )
+
+    control_statement << (   if_else_statement 
+                           | apply_table_statement 
+                           | apply_control_function_statement
+                         )
+    
+    control_function = Group (   Suppress('control')
+                               + control_fn_name
+                               + LBRACE + Group ( OneOrMore( control_statement ) ) + RBRACE
+                             )
+
+    control_function.setParseAction( do_control_function )
+
     # --- P4 definition ------------------------------------
 
     p4_declaration = (   header_declaration 
@@ -171,7 +239,7 @@ def new_GP4_parser() :
                        | parser_function 
                        # | action_function 
                        # | table_declaration 
-                       # | control_function
+                       | control_function
                      )
 
     parser = OneOrMore(p4_declaration)

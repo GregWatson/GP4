@@ -15,7 +15,8 @@ class P4(object):
 
         self.header_decls = {} # maps name of header_decl to header_decl object
         self.header_insts = {} # maps inst name of header_inst to header_inst or header_stack object
-        self.parser_functions = {} # maps parser function name (string) to parse function object
+        self.parser_functions = {}  # maps parser function name (string) to parse function object
+        self.control_functions = {} # maps control function name (string) to control function object
 
         # run time fields
         self.hdr_extraction_order = []  # list of header objects in the order they were extracted.
@@ -61,6 +62,13 @@ class P4(object):
                                  ast_obj.string, ast_obj.loc)
 
             self.parser_functions[ast_obj.name] = ast_obj 
+
+        elif ( obj_typ == 'control_function'):
+            if ast_obj.name in self.control_functions:
+                print_syntax_err('Control function "%s" already defined.' % ast_obj.name,
+                                 ast_obj.string, ast_obj.loc)
+
+            self.control_functions[ast_obj.name] = ast_obj 
 
         else:
             print "Internal Error: P4:add_AST_obj  Unknown AST_obj", ast_obj.typ
