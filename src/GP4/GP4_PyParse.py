@@ -219,6 +219,7 @@ def new_GP4_parser() :
                                   )
 
     apply_control_function_statement = Group ( control_fn_name +   LPAREN + RPAREN + SEMICOLON )
+    apply_control_function_statement.setParseAction( do_apply_control_function_statement )
 
     control_statement << (   if_else_statement 
                            | apply_table_statement 

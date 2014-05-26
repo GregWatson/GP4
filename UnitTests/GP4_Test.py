@@ -7,8 +7,10 @@
 import sys, unittest, re
 sys.path.append("/home/gwatson/Work/GP4/src")
 try:
-    from GP4.GP4_CompilerHelp import compile_string
+    from GP4.GP4_CompilerHelp  import compile_string
     from GP4.GP4_Packet_Parser import parse_packet
+    from GP4.GP4_Execute       import run_control_function
+
     import GP4.GP4_Exceptions
 except ImportError, err:
     print "Unable to load GP4 libs. sys.path is:"
@@ -37,7 +39,7 @@ def simple_test(program, debug=0):
 # @param init_state : String. Name of initial parser state
 # @param debug   : Integer. Debug flags
 # @return (p4, err, bytes_used) : (err !=None if error), bytes_used = number of bytes consumed from header.
-def parse_and_run_test(program, pkt, init_state='start', debug=0):
+def parse_and_run_test(program, pkt, init_state='start', init_ctrl='ingress', debug=0):
 
     p4 = compile_string( program=program )
 
@@ -47,7 +49,12 @@ def parse_and_run_test(program, pkt, init_state='start', debug=0):
   
     err, bytes_used = parse_packet(p4, pkt, init_state)
 
-    return (p4, err, bytes_used)
+    if err:
+        return (p4, err, bytes_used)
+
+    run_control_function(p4, pkt, init_ctrl )
+
+    return (p4, '', bytes_used )
 
 
     

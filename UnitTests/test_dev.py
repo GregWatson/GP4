@@ -46,16 +46,23 @@ control my_ctrl_fun { apply_table( fred);  }
     def test102(self, debug=1):
 
         program = """
-control my_ctrl_fun { 
+header L2_def { fields { DA : 48; SA : 48; EthType : 16; }  }
+
+L2_def L2_hdr;
+
+parser start  { extract ( L2_hdr ) ; return P4_PARSING_DONE ; }
+
+control ingress { 
     if (True) { apply_table(L2); }
     else {
-        do_ctrl_func ( ) ;
+        do_a_ctrl_func ( ) ;
     }
+    do_another_ctrl_func() ;
 }
 """
 
-        exp_bytes_used = 5
-        pkt = [ 5+i for i in range(8) ]
+        exp_bytes_used = 14
+        pkt = [ i for i in range(14) ]
 
         try:
 

@@ -17,7 +17,7 @@ import sys
 ## construct a field modifier list (check valid)
 # @param string : String.  Source text
 # @param loc    : Integer. location in text of this object
-# @param string : Tokens.  List of tokens representing this object.
+# @param toks : Tokens.  List of tokens representing this object.
 # @return new token containing the constructed object.
 def do_field_mod_list(string, loc, toks):
     # print "field_mod_list:",toks[0]
@@ -34,7 +34,7 @@ def do_field_mod_list(string, loc, toks):
 ## construct a header_declaration object
 # @param string : String.  Source text
 # @param loc    : Integer. location in text of this object
-# @param string : Tokens.  List of tokens representing this object.
+# @param toks : Tokens.  List of tokens representing this object.
 # @return new token containing the constructed object.
 def do_header_declaration(string, loc, toks):
     # print "hdr_decl:", toks
@@ -46,7 +46,7 @@ def do_header_declaration(string, loc, toks):
 ## construct a field_declaration object
 # @param string : String.  Source text
 # @param loc    : Integer. location in text of this object
-# @param string : Tokens.  List of tokens representing this object.
+# @param toks : Tokens.  List of tokens representing this object.
 # @return new token containing the constructed object.
 def do_field_declaration(string, loc, toks):
     # print "field_decl:", toks
@@ -61,7 +61,7 @@ def do_field_declaration(string, loc, toks):
 ## construct a header instance or header stack object
 # @param string : String.  Source text
 # @param loc    : Integer. location in text of this object
-# @param string : Tokens.  List of tokens representing this object.
+# @param toks : Tokens.  List of tokens representing this object.
 # @return new token containing the constructed object.
 def do_instance_declaration(string, loc, toks):
     # print "inst_decl:", toks
@@ -101,7 +101,7 @@ def do_instance_declaration(string, loc, toks):
 ## construct a Parser Function object
 # @param string : String.  Source text
 # @param loc    : Integer. location in text of this object
-# @param string : Tokens.  List of tokens representing this object.
+# @param toks : Tokens.  List of tokens representing this object.
 # @return new token containing the constructed object.
 def do_parser_function(string, loc, toks):
     print "parser_function:", toks
@@ -115,10 +115,22 @@ def do_parser_function(string, loc, toks):
             ) ]
 
 
+
+
+
+## add "do_ctrl_func" to token list to make it easy to parse the stateemnt later
+# @param string : String.  Source text
+# @param loc    : Integer. location in text of this object
+# @param toks : Tokens.  List of tokens representing this object.
+# @return new token starting with string "do_ctrl_func" 
+def do_apply_control_function_statement(string, loc, toks):
+    toks[0] = ['do_ctrl_func', toks[0][0] ]
+
+
 ## construct a Control Function object
 # @param string : String.  Source text
 # @param loc    : Integer. location in text of this object
-# @param string : Tokens.  List of tokens representing this object.
+# @param toks : Tokens.  List of tokens representing this object.
 # @return new token containing the constructed object.
 def do_control_function(string, loc, toks):
     print "control_function:", toks

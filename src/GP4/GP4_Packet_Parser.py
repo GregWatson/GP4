@@ -44,11 +44,11 @@ def parse_packet(p4, pkt, init_state):
     print "After parsing, the following headers are defined:"
     for h in p4.hdr_extraction_order:
         if h.fields_created:
-            print h
+            print '  ',h
 
     print "The following metadata headers are created:"
     for h in p4.header_insts.values():
         if h.fields_created and h.hdr_is_metadata:
-            print h
+            print '  ',h
 
     return (err, bytes_used)

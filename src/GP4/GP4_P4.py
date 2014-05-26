@@ -90,6 +90,14 @@ class P4(object):
         return self.parser_functions.get(func_name)
 
 
+    ## Finds the named control function and returns the corresponding function object or None
+    # @param self : P4 object
+    # @param func_name : name of the control function
+    # @return ctrl_function object or None
+    def get_control_function(self, func_name):
+        return self.control_functions.get(func_name)
+
+
 
     ## Returns the actual named header instance (or stack) or None.
     # @param self : P4 object
