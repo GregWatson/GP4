@@ -1,4 +1,8 @@
-Implement : Packet Processing and Control Flow
+Allow hex constants (0x[0-9A-Fa-f]+)
+
+Check if-then-else for control func
+
+check bool_exprs for control func
 
 Implement : Table Declaration
 
@@ -14,5 +18,6 @@ DONE
 - Compile 'length' definitions
 - Handle '*' in bit_width   (requires 'length' to be handled.)
 - Handle max_length
+- Implement : Packet Processing and Control Flow
 
 

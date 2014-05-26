@@ -61,6 +61,23 @@ def field_ref_to_string(field_ref):
 
 
 
+## Given list of strings or lists of strings, etc., flatten it to a string.
+# @param expr : list of strings or more lists of strings
+# @returns String
+def flatten_list_of_strings( expr):
+    if type(expr) == type('s'): 
+        return expr
+    else:
+        if len(expr)==1: 
+            return flatten_list_of_strings(expr[0])
+        code = '('
+        for el in expr: 
+            code += ' ' + flatten_list_of_strings(el)
+        return code + ' )'
+
+
+
+
 # Bits class. Behaves as an ordered sequence of bits.
 
 class Bits(object):

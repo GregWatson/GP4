@@ -2,7 +2,7 @@
 #
 ## @package GP4
 
-from GP4_Utilities  import print_syntax_err
+from GP4_Utilities  import print_syntax_err, flatten_list_of_strings
 from GP4_AST_object import AST_object
 import copy
 
@@ -85,22 +85,7 @@ class Header_Declaration(AST_object):
     # @param self : object
     # @returns String
     def get_flattened_length_expr(self):
-        return self.flatten_expr(self.length_expr)
-
-    ## Given list of strings or lists of strings, etc., flatten it to a string.
-    # @param self : object
-    # @param expr : list of strings or more lists of strings
-    # @returns String
-    def flatten_expr(self, expr):
-        if type(expr) == type('s'): 
-            return expr
-        else:
-            if len(expr)==1: 
-                return self.flatten_expr(expr[0])
-            code = '('
-            for el in expr: 
-                code += ' ' + self.flatten_expr(el)
-            return code + ' )'
+        return flatten_list_of_strings(self.length_expr)
 
 
     ## Return bool indicating if specified field name is in this declaration

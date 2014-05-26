@@ -170,12 +170,15 @@ def new_GP4_parser() :
     control_fn_name = Word( alphas,alphanums+'_' )
     table_name      = Word( alphas,alphanums+'_' )
 
+    get_field_ref = field_ref.copy()
+    get_field_ref.setParseAction( do_get_field_ref )
+
     unOp       = oneOf('~ -')
     binOp_and  = Literal('&')
     binOp_xor  = Literal('^')
     binOp_or   = Literal('|')
 
-    exp_atom  = value | field_ref 
+    exp_atom  = value | get_field_ref | oneOf('True False')
 
     exp = operatorPrecedence( exp_atom,    # highest precedence first
                             [
@@ -189,11 +192,12 @@ def new_GP4_parser() :
                             ] )
 
     valid_header_ref = Suppress('valid') + LPAREN + header_ref + RPAREN
-    
+    valid_header_ref.setParseAction( do_valid_header_ref )
+
     relOp      = oneOf('> >= == <= < !=')
     exp_rel_op = Group( exp + relOp + exp )
 
-    bool_expr_atom = valid_header_ref | exp_rel_op | oneOf('True False')
+    bool_expr_atom = valid_header_ref | exp_rel_op | exp
 
     boolOp_not = Literal('not')
     boolOp_and = Literal('and')
@@ -210,7 +214,7 @@ def new_GP4_parser() :
 
     else_statement = Suppress('else') + LBRACE + Group ( OneOrMore( control_statement ) ) + RBRACE
 
-    if_else_statement = Group ( Literal('if') + LPAREN + bool_expr + RPAREN
+    if_else_statement = Group ( Literal('if') + LPAREN + Group(bool_expr) + RPAREN
                                 + LBRACE + Group ( OneOrMore( control_statement ) ) + RBRACE
                                 + Optional(else_statement) )
     
@@ -233,13 +237,18 @@ def new_GP4_parser() :
 
     control_function.setParseAction( do_control_function )
 
+    # --- Table definition ---------------------------------
+
+    table_declaration = Group ( Suppress('table') + table_name + LBRACE + RBRACE )
+    table_declaration.setParseAction( do_table_declaration )
+
     # --- P4 definition ------------------------------------
 
     p4_declaration = (   header_declaration 
                        | instance_declaration 
                        | parser_function 
                        # | action_function 
-                       # | table_declaration 
+                       | table_declaration 
                        | control_function
                      )
 

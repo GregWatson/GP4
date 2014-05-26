@@ -45,6 +45,15 @@ class Header_Stack(Header_Instance):
             return len(self.stack) < self.stack_max_size
         return int(index) < self.stack_max_size
     
+    ## Return the specified (indexed) instance or None
+    # @param self : object
+    # @param index : number 
+    # @return actual header instance. 
+    def get_indexed_instance(self, index):
+        index = int(index)
+        if len(self.stack) <= index: return None
+        else: return self.stack[index]
+
 
     ## Return the specified (indexed) instance. Create it if needed.
     # @param self : object

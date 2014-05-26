@@ -53,12 +53,18 @@ L2_def L2_hdr;
 parser start  { extract ( L2_hdr ) ; return P4_PARSING_DONE ; }
 
 control ingress { 
-    if (True) { apply_table(L2); }
+    /* if ( valid ( L2_hdr) and ( L2_hdr.DA == 1234 ) ) { apply_table(a_table); } */
+    if ( L2_hdr.DA == 4328719365 ) { apply_table(a_table); } /* 0x102030405 */
     else {
-        do_a_ctrl_func ( ) ;
+        do_another_ctrl_func ( ) ;
     }
     do_another_ctrl_func() ;
 }
+
+control do_another_ctrl_func {  apply_table(a_table); }
+
+table a_table { }
+
 """
 
         exp_bytes_used = 14
@@ -67,7 +73,7 @@ control ingress {
         try:
 
             (p4, err, num_bytes_used ) = parse_and_run_test(program, pkt, init_state='start', 
-                                                        debug=debug)
+                                                        init_ctrl='ingress', debug=debug)
             self.assert_( err=='', 'Saw parse runtime err:' + str(err) )
             self.assert_( num_bytes_used == exp_bytes_used, 
                       'Expected %d bytes consumed, Saw %d.' % (exp_bytes_used, num_bytes_used ))
@@ -76,6 +82,9 @@ control ingress {
 
         except GP4.GP4_Exceptions.RuntimeError as err:
             print "Unexpected Runtime Error:",err.data
+            self.assert_(False)
+        except GP4.GP4_Exceptions.InternalError as err:
+            print "Unexpected Internal Error:",err.data
             self.assert_(False)
 
 

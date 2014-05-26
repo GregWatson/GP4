@@ -555,7 +555,7 @@ if __name__ == '__main__':
 
     if (True):
         single = unittest.TestSuite()
-        single.addTest( test_dev('test9a' ))
+        single.addTest( test_dev('test9' ))
         unittest.TextTestRunner().run(single)
 
     else:

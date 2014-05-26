@@ -37,9 +37,10 @@ def simple_test(program, debug=0):
 # @param program : String.  The program.
 # @param pkt     : [ byte ] i.e. list of integers
 # @param init_state : String. Name of initial parser state
+# @param init_ctrl  : String. Name of initial control function. If None then dont execute
 # @param debug   : Integer. Debug flags
 # @return (p4, err, bytes_used) : (err !=None if error), bytes_used = number of bytes consumed from header.
-def parse_and_run_test(program, pkt, init_state='start', init_ctrl='ingress', debug=0):
+def parse_and_run_test(program, pkt, init_state='start', init_ctrl='', debug=0):
 
     p4 = compile_string( program=program )
 
@@ -52,7 +53,7 @@ def parse_and_run_test(program, pkt, init_state='start', init_ctrl='ingress', de
     if err:
         return (p4, err, bytes_used)
 
-    run_control_function(p4, pkt, init_ctrl )
+    if init_ctrl: run_control_function(p4, pkt, init_ctrl )
 
     return (p4, '', bytes_used )
 

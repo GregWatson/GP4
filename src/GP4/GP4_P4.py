@@ -17,6 +17,7 @@ class P4(object):
         self.header_insts = {} # maps inst name of header_inst to header_inst or header_stack object
         self.parser_functions = {}  # maps parser function name (string) to parse function object
         self.control_functions = {} # maps control function name (string) to control function object
+        self.tables = {} # maps table name to table object
 
         # run time fields
         self.hdr_extraction_order = []  # list of header objects in the order they were extracted.
@@ -70,6 +71,13 @@ class P4(object):
 
             self.control_functions[ast_obj.name] = ast_obj 
 
+        elif ( obj_typ == 'table'):
+            if ast_obj.name in self.tables:
+                print_syntax_err('Table "%s" already defined.' % ast_obj.name,
+                                 ast_obj.string, ast_obj.loc)
+
+            self.tables[ast_obj.name] = ast_obj 
+
         else:
             print "Internal Error: P4:add_AST_obj  Unknown AST_obj", ast_obj.typ
             sys.exit(1)
@@ -98,6 +106,14 @@ class P4(object):
         return self.control_functions.get(func_name)
 
 
+    ## Finds the named table and returns the corresponding table object or None
+    # @param self : P4 object
+    # @param table_name : name of the table
+    # @return table object or None
+    def get_table(self, table_name):
+        return self.tables.get(table_name)
+
+
 
     ## Returns the actual named header instance (or stack) or None.
     # @param self : P4 object
@@ -122,6 +138,51 @@ class P4(object):
             if not h_inst:
                 raise GP4_Exceptions.RuntimeError, "stack error: " + hdr_name
             return h_inst
+
+
+
+    ## Returns hdr object if created, else raise Runtime error
+    # @param self : P4 object
+    # @param hdr_name : name of the hdr instance
+    # @param index    : either '' if hdr is scalar or, if stack, stack index number
+    # @returns Header_Instance object
+    def get_hdr_inst(self, hdr_name, index):
+        """ runtime error if hdr doesnt even exist """
+        #print "get_hdr_inst:", hdr_name, index
+        if index == '':
+            hdr = self.header_insts.get(hdr_name)  # scalar
+            if not hdr:
+                raise GP4_Exceptions.RuntimeError, \
+                         'Error: hdr %s not found.' % hdr_name 
+            return hdr
+        else:
+            # stack
+            stack = self.header_insts.get(hdr_name)
+            if not stack: 
+                raise GP4_Exceptions.RuntimeError, \
+                         'Error: hdr stack %s not found.' % hdr_name 
+            if stack.typ != 'header_stack':
+                raise GP4_Exceptions.RuntimeError, \
+                         'Error: hdr %s not defined or else not a stack.' % hdr_name 
+            h_inst = stack.get_indexed_instance(index)
+            if not h_inst:
+                raise GP4_Exceptions.RuntimeError, \
+                         'Error: hdr %s not defined.' % hdr_name 
+            return h_inst
+
+
+
+    ## Returns bool indicating if hdr inst's fields are created
+    # @param self : P4 object
+    # @param hdr_name : name of the hdr instance
+    # @param index    : either '' if hdr is scalar or, if stack, stack index number
+    # @returns Boolean
+    def check_hdr_inst_is_valid(self, hdr_name, index):
+        """ runtime error if hdr doesnt even exist """
+        #print "check_hdr_inst_is_valid:", hdr_name, index
+        hdr = self.get_hdr_inst( hdr_name, index)
+        return hdr.fields_created
+
 
 
     ## Returns bool indicating if stack index is OK
@@ -228,7 +289,7 @@ class P4(object):
 
     ## Set the specified field in given hdr object to given value
     # @param self : P4 object
-    # @param sw_field_ref : List of strings for switc_field_ref
+    # @param sw_field_ref : List of strings for switch_field_ref
     # @param bits : Bits object
     # @returns (field_value, field_width) both Integers
     def get_sw_field_ref_value_and_width(self, sw_field_ref, bits):
