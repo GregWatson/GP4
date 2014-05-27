@@ -19,7 +19,9 @@ def new_GP4_parser() :
 
     field_name       = Word(alphas,alphanums+'_')
     header_type_name = Word(alphas,alphanums+'_')
-    value            = Word(nums)
+    decimalnum       = Word(nums)
+    hexnum           = Combine(Literal('0x') + Word(hexnums) )
+    value            = hexnum | decimalnum 
     bit_width        = value | Literal("*")
 
     multOp   = Literal('*')
@@ -58,7 +60,7 @@ def new_GP4_parser() :
                                 + LBRACE + header_dec_body + RBRACE
                                )
     
-    bit_width.setParseAction(  lambda t: 0 if t[0] == '*' else int(t[0]) )
+    bit_width.setParseAction(  do_bit_width )
     header_declaration.setParseAction( do_header_declaration )
     field_dec.setParseAction( do_field_declaration )
     field_mod_list.setParseAction( do_field_mod_list )

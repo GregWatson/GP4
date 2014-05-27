@@ -2,7 +2,7 @@
 #
 ## @package GP4
 
-from GP4_Utilities import print_syntax_err
+from GP4_Utilities import print_syntax_err, get_integer
 import GP4_Exceptions
 import sys
 
@@ -253,7 +253,7 @@ class P4(object):
             if err: return(err, bits_used/8, '')
 
         for f in hdr.fields:
-            num_bits        = int(f.bit_width)
+            num_bits        = get_integer(f.bit_width)
 
             if num_bits == 0 : # Need to compute length expression for header.
                 num_bits = hdr.compute_remaining_header_length_bits(self)
@@ -302,7 +302,7 @@ class P4(object):
 
         if sw_field_ref[0] == 'current': # raw bits, bit_offset, bit_width
             assert len(sw_field_ref) == 3
-            bit_offset, bit_width = (int(sw_field_ref[1]), int(sw_field_ref[2]))
+            bit_offset, bit_width = (get_integer(sw_field_ref[1]), get_integer(sw_field_ref[2]))
             field_value = bits.get_bit_field(bit_offset, bit_width)
 
         elif  sw_field_ref[0] == 'latest.': # latest.<field_name>

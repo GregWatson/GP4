@@ -131,7 +131,7 @@ class Parser_Function(AST_object):
             index = stmt[2]
             if index == 'next' : index = "'next'"
             else: #value
-                if not p4.check_stack_index(hdr_name, int(index)):
+                if not p4.check_stack_index(hdr_name, get_integer(index)):
                     return ('Stack index %s out of range for stack %s' % (index, hdr_name),'')
                 
         code = [ 'hdr_i = p4.get_or_create_hdr_inst("' + hdr_name + '", ' + index + ')',
@@ -164,7 +164,7 @@ class Parser_Function(AST_object):
         code = [ 'hdr_i = p4.get_or_create_hdr_inst("' + hdr_name + '", "")',
                  'if not hdr_i: print "Error: header \'%s\' not found."' % hdr_name,
                  'p4.set_hdr_field(hdr_i, "%s", %s)' % \
-                            (field_name, int(field_value) ) ]
+                            (field_name, get_integer(field_value) ) ]
         print code
         return ('', code)
 

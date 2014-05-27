@@ -2,7 +2,7 @@
 #
 ## @package GP4
 
-from GP4_Utilities  import print_syntax_err, flatten_list_of_strings
+from GP4_Utilities  import print_syntax_err, flatten_list_of_strings, get_integer
 from GP4_AST_object import AST_object
 import copy
 
@@ -66,7 +66,7 @@ class Header_Declaration(AST_object):
                 if opt_name == 'length':
                     self.length_expr = opt.asList()[1:]
                 if opt_name == 'max_length':
-                    self.max_length = int(opt[1])
+                    self.max_length = get_integer(opt[1])
 
         if hdr_len_undefined:
             if not  self.length_expr:

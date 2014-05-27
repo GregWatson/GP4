@@ -54,7 +54,7 @@ parser start  { extract ( L2_hdr ) ; return P4_PARSING_DONE ; }
 
 control ingress { 
     /* if ( valid ( L2_hdr) and ( L2_hdr.DA == 1234 ) ) { apply_table(a_table); } */
-    if ( L2_hdr.DA == 4328719365 ) { apply_table(a_table); } /* 0x102030405 */
+    if ( L2_hdr.DA ==  0x102030405 ) { apply_table(a_table); } 
     else {
         do_another_ctrl_func ( ) ;
     }

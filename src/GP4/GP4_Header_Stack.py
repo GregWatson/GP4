@@ -2,7 +2,7 @@
 #
 ## @package GP4
 
-from GP4_Utilities  import print_syntax_err
+from GP4_Utilities  import print_syntax_err, get_integer
 from GP4_Header_Instance import Header_Instance
 
 class Header_Stack(Header_Instance):
@@ -43,14 +43,14 @@ class Header_Stack(Header_Instance):
         if index == 'last': return True
         if index == 'next':
             return len(self.stack) < self.stack_max_size
-        return int(index) < self.stack_max_size
+        return get_integer(index) < self.stack_max_size
     
     ## Return the specified (indexed) instance or None
     # @param self : object
     # @param index : number 
     # @return actual header instance. 
     def get_indexed_instance(self, index):
-        index = int(index)
+        index = get_integer(index)
         if len(self.stack) <= index: return None
         else: return self.stack[index]
 
@@ -63,7 +63,7 @@ class Header_Stack(Header_Instance):
         """ index may be a number or 'next'.
             Create instance if it does not exist, IF it is the next to be created.
         """
-        if index != 'next' and index != 'last': index = int(index)
+        if index != 'next' and index != 'last': index = get_integer(index)
 
 
         # Create a new header_inst if index is next or else it is a value equal to

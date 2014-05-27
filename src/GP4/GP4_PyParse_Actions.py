@@ -15,6 +15,22 @@ import sys
 
 
 
+## compute bit width. '*' becomes zero.
+# @param string : String.  Source text
+# @param loc    : Integer. location in text of this object
+# @param toks : Tokens.  List of tokens representing this object.
+# @return new token containing the constructed object.
+def do_bit_width(string, loc, toks):
+    # print "do_bit_width:",toks[0]
+    if toks[0] == '*': toks[0] = 0
+    elif toks[0].startswith('0x'): 
+        toks[0] = int(toks[0][2:],16)
+    else: toks[0] = int(toks[0]) 
+
+
+
+
+
 ## construct a field modifier list (check valid)
 # @param string : String.  Source text
 # @param loc    : Integer. location in text of this object
@@ -81,7 +97,7 @@ def do_instance_declaration(string, loc, toks):
         inst_name = inst[1]
         if len(inst)==3:  # must be array
             is_array = True
-            max_inst_val = int(inst[2])
+            max_inst_val = get_integer(inst[2])
     if is_array: 
         return [ GP4_Header_Stack.Header_Stack( 
             string, loc, 

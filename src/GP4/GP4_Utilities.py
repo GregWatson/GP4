@@ -5,6 +5,15 @@
 import GP4_Exceptions
 import sys
 
+
+## COnvert string to integer. String may be hex (startswith 0x)
+# @param string : String 
+# @return integer
+def get_integer(string):
+    if type(string) == type(1): return string 
+    if string.startswith('0x'): return int(string[2:],16)
+    else: return int(string)
+
 ## print the surrounding text where the syntax error occurred.
 # @param string : String.  Source text
 # @param loc    : Integer. location in text of this object

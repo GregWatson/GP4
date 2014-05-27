@@ -324,10 +324,10 @@ parser start  {
                 extract ( L3_hdr[0] ) ; /* 1 */
                 extract ( L3_hdr[1] ) ; /* 2 */
                 return switch ( current(4,12), latest.jjj, L2_hdr.type0, L3_hdr[1].jjj ) 
-                /*                    304         02            00           02 = 12952141826*/
+                /*                    304         02            00           02 = 12952141826 */
                 { 0           : GET_TYPE0 ; 
                   1, 3 mask 7 : P4_PARSING_DONE ; 
-                  12952141826 : GET_TYPE1 ;
+                  0x304020002 : GET_TYPE1 ;
                   default     : GET_TYPE0 ; 
                 }
               }
@@ -376,7 +376,7 @@ Type_1    Type_1_hdr;
 parser start  {
                 extract ( L2_hdr    ) ; /* 5 */
                 return switch ( L2_hdr.type0 ) 
-                { 0,1,2,3,4, 6,7,8,9,10 : BAD ; 
+                { 0,1,2,3,4, 6,7,8,9,0xa : BAD ; 
                   default               : GET_NEXT4 ; 
                 }
               }
@@ -543,6 +543,47 @@ parser start  {
             self.assert_(True)
 
 
+    """ Test use of hex values  ---------------------------------------------"""
+    def test10(self, debug=1):
+
+        program = """
+header L2_def  { fields { len: 0x8;
+                          other: 0x10; 
+                          data: *;
+                        }
+                 length (len * 0x2)>>1 + 1 - 1 ;
+                 max_length 0x10;
+               }  
+L2_def    L2_hdr;
+parser start  {
+                extract ( L2_hdr ) ; 
+                return  P4_PARSING_DONE ; 
+              }
+"""
+        
+        exp_bytes_used = 10
+        pkt = [ 10+i for i in range(10) ]
+
+        try:
+
+            (p4, err, num_bytes_used ) = parse_and_run_test(program, pkt, init_state='start', 
+                                                        debug=debug)
+            self.assert_( err=='', 'Saw parse runtime err:' + str(err) )
+            self.assert_( num_bytes_used == exp_bytes_used, 
+                      'Expected %d bytes consumed, Saw %d.' % (exp_bytes_used, num_bytes_used ))
+            self.check_field( p4, 'L2_hdr.len', 10 )
+            self.check_field( p4, 'L2_hdr.other', 0xb0c )
+            self.check_field( p4, 'L2_hdr.data', 0xd0e0f10111213 )
+
+        except GP4.GP4_Exceptions.RuntimeError as err:
+            print "Unexpected Runtime Error:",err.data
+            self.assert_(False)
+        except GP4.GP4_Exceptions.SyntaxError as err:
+            print "Unexpected Syntax Error:",err.data
+            self.assert_(False)
+        except GP4.GP4_Exceptions.RuntimeParseError as err:
+            print "Unexpected Runtime Parse Error:",err.data
+            self.assert_(False)
 
 
 
@@ -555,7 +596,7 @@ if __name__ == '__main__':
 
     if (True):
         single = unittest.TestSuite()
-        single.addTest( test_dev('test9' ))
+        single.addTest( test_dev('test10' ))
         unittest.TextTestRunner().run(single)
 
     else:
