@@ -6,7 +6,7 @@ from pyparsing import *
 from GP4_PyParse_Actions import *
 import sys
 
-
+ParserElement.enablePackrat()  # REALLY helps performance of operatorPrecedence()
 
 ## Construct a new PyParsing Parser for P4
 # @return parser object.
@@ -241,8 +241,33 @@ def new_GP4_parser() :
 
     # --- Table definition ---------------------------------
 
-    table_declaration = Group ( Suppress('table') + table_name + LBRACE + RBRACE )
+    table_min_size = Group( Keyword('min_size') + value + SEMICOLON )
+    table_max_size = Group( Keyword('max_size') + value + SEMICOLON )
+
+    table_declaration = Group ( Suppress('table') + table_name + LBRACE 
+                                + Optional( table_min_size )
+                                + Optional( table_max_size )
+                                + RBRACE )
     table_declaration.setParseAction( do_table_declaration )
+
+
+#
+#table-declaration ::=
+#    table table-name {
+#        [ reads { field-match + } ]
+#        action-specification
+#        [ min_size value ; ]
+#        [ max_size value ; ]
+#    }
+#
+#field-match ::= field-or-masked-ref : field-match-type ;
+#field-or-masked-ref ::= field-ref | field-ref mask value
+#field-match-type ::= exact | ternary | lpm | range | valid
+#
+#action-specification ::= 
+#    actions { [ action-name  [ next_table table-name ] ; ] + }
+#
+
 
     # --- P4 definition ------------------------------------
 

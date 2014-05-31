@@ -98,4 +98,23 @@ class GP4_Test(unittest.TestCase):
 
         self.assert_( act_val == val, "Expected field %s to have value 0x%x but saw 0x%x" % 
                         ( field_ref, val, act_val ) )
+
+
+    ## Check that the specified table has the specified props
+    # @param self : test
+    # @param p4   : p4 object
+    # @param table_name : String.  
+    # @param min_size : Integer: expected min_size
+    # @param max_size : Integer: expected max_size
+    # @returns None: will assert a failure
+    def check_table(self, p4, table_name, min_size=None, max_size=None):
+        tbl = p4.get_table(table_name)
+        self.assert_( tbl,"Table '%s' is not defined." % table_name)
+         
+        if min_size != None:
+            self.assert_( tbl.min_size == min_size, 
+            "Table '%s' min_size is %s but expected %s." % (table_name, `tbl.min_size`, `min_size`))
+        if max_size != None:
+            self.assert_( tbl.max_size == max_size, 
+            "Table '%s' max_size is %s but expected %s." % (table_name, `tbl.max_size`, `max_size`))
                     

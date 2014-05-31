@@ -15,13 +15,16 @@ class Table(AST_object):
     # @param string : String.  Source text
     # @param loc    : Integer. location in text of this object
     # @param name   : String. Name of the Table
+    # @param min_size : Integer. 
+    # @param max_size : Integer. 
     # @returns self
-    def __init__(self, string, loc, name ):
+    def __init__(self, string, loc, name, min_size=None, max_size=None ):
         
         super(Table, self).__init__(string, loc, 'table')
 
-        self.name   = name
-
+        self.name     = name
+        self.min_size = min_size
+        self.max_size = max_size
 
     ## Apply this table with a P4 argument as context.
     # @param self : Control_Function object

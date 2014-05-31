@@ -122,7 +122,7 @@ class P4(object):
     # @returns header_inst or header_stack object (or None)
     def get_or_create_hdr_inst(self, hdr_name, index):
         """ This will create a new stack entry if it does not already exist """
-        #print "get_hdr_inst:", hdr_name, index
+        #print "get_or_create_hdr_inst:", hdr_name, index
         if index == '':
             return self.header_insts.get(hdr_name)  # scalar
         else:
@@ -180,7 +180,14 @@ class P4(object):
     def check_hdr_inst_is_valid(self, hdr_name, index):
         """ runtime error if hdr doesnt even exist """
         #print "check_hdr_inst_is_valid:", hdr_name, index
-        hdr = self.get_hdr_inst( hdr_name, index)
+        if not self.hdr_inst_defined( hdr_name ):
+            raise GP4_Exceptions.RuntimeError, \
+                'Header "%s" not defined.' % hdr_name
+        else:
+            try:
+                hdr = self.get_hdr_inst( hdr_name, index)
+            except GP4_Exceptions.RuntimeError :
+                return False
         return hdr.fields_created
 
 

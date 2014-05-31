@@ -1,7 +1,4 @@
 
-Check if-then-else for control func
-
-check bool_exprs for control func
 
 Implement : Table Declaration
 
@@ -19,5 +16,7 @@ DONE
 - Handle max_length
 - Implement : Packet Processing and Control Flow
 - Allow hex constants (0x[0-9A-Fa-f]+)
+- Check if-then-else for control func
+- check bool_exprs for control func
 
 
