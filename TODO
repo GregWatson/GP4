@@ -1,4 +1,6 @@
+create function to construct the match value from headers. (the "reads" stmt )
 
+check table actions are defined.
 
 Implement : Table Declaration
 

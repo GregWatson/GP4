@@ -76,9 +76,9 @@ control ingress {
 
 control do_another_ctrl_func {  apply_table(b_table); }
 
-table a_table { }
-table b_table { }
-table BAD_table { }
+table a_table {    actions { some_action ; } }
+table b_table {    actions { some_action ; } }
+table BAD_table {    actions { some_action ; } }
 
 """
 
@@ -141,8 +141,8 @@ control ingress {
     else { apply_table (BAD_table); }
 }
 
-table GOOD_table { }
-table BAD_table { }
+table GOOD_table {  actions { some_action ; } }
+table BAD_table {    actions { some_action ; } }
 
 """
 

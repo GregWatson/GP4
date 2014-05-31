@@ -241,10 +241,27 @@ def new_GP4_parser() :
 
     # --- Table definition ---------------------------------
 
+    action_name  = Word(alphas,alphanums+'_')
+    table_name   = Word(alphas,alphanums+'_')
+
     table_min_size = Group( Keyword('min_size') + value + SEMICOLON )
     table_max_size = Group( Keyword('max_size') + value + SEMICOLON )
 
+    field_or_masked_ref = Group ( ( field_ref + Suppress('mask') + value ) | field_ref )
+
+    field_match_type = oneOf('exact ternary lpm range valid')
+
+    field_match =  Group ( field_or_masked_ref + COLON + field_match_type + SEMICOLON )
+
+    reads_field_match = Group( Keyword('reads') + LBRACE + OneOrMore( field_match ) + RBRACE )
+                
+    action_next_table =  Group( action_name + Optional( Suppress('next_table') + table_name) + SEMICOLON )
+
+    action_specification = Group(   Keyword('actions') + LBRACE + OneOrMore( action_next_table ) + RBRACE )
+
     table_declaration = Group ( Suppress('table') + table_name + LBRACE 
+                                + Optional( reads_field_match )
+                                + action_specification
                                 + Optional( table_min_size )
                                 + Optional( table_max_size )
                                 + RBRACE )
@@ -259,10 +276,6 @@ def new_GP4_parser() :
 #        [ min_size value ; ]
 #        [ max_size value ; ]
 #    }
-#
-#field-match ::= field-or-masked-ref : field-match-type ;
-#field-or-masked-ref ::= field-ref | field-ref mask value
-#field-match-type ::= exact | ternary | lpm | range | valid
 #
 #action-specification ::= 
 #    actions { [ action-name  [ next_table table-name ] ; ] + }

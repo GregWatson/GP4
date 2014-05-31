@@ -116,7 +116,7 @@ class P4(object):
 
 
     ## Returns the actual named header instance (or stack) or None.
-    # @param self : P4 object
+    # @param self : P4 object\
     # @param hdr_name : name of the hdr instance
     # @param index    : either '' if hdr is scalar or, if stack, stack index number or 'next'
     # @returns header_inst or header_stack object (or None)

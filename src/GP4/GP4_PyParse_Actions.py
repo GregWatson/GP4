@@ -206,10 +206,13 @@ def do_table_declaration(string, loc, toks):
     
     my_toks = toks.asList()
     assert len(my_toks)==1
-    table = my_toks[0]
-    name  = table[0]
+    table   = my_toks[0]
+    name    = table[0]
+    actions = []
+    field_matches = []
     min_size = 0
     max_size = 0
+
     for el in table[1:] :
         assert len(el)>1,"Expected table element to have a type string and a value. Saw %s" % `el`
         el_type = el[0]
@@ -217,11 +220,19 @@ def do_table_declaration(string, loc, toks):
             min_size = get_integer(el[1])
         elif el_type == 'max_size': 
             max_size = get_integer(el[1])
+        elif el_type == 'reads':
+            field_matches = el[1:]
+        elif el_type == 'actions':
+            actions = el[1:]
         else:
             assert False,"Unknown Table element type: %s" % el_type
 
     return [ GP4_Table.Table(
-                string, loc, name, min_size=min_size, max_size=max_size
+                string, loc, name, 
+                field_matches=field_matches, 
+                actions=actions, 
+                min_size=min_size, 
+                max_size=max_size
             ) ]
 
 

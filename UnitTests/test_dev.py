@@ -37,6 +37,7 @@ control ingress {
 }
 
 table my_table { 
+    actions { some_action ; }
     min_size 23;
     max_size 1024;
 }
@@ -64,6 +65,52 @@ table my_table {
             self.assert_(False)
 
 
+    """ Test table min max  -----------------------------------------"""
+    def test201(self, debug=1):
+
+        program = """
+header L3_def { fields { stuff : 32; }  }
+
+L3_def L3_hdr[3];
+
+parser start  { extract ( L3_hdr[next] ); 
+                return P4_PARSING_DONE ; }
+
+control ingress { 
+    apply_table( my_table );
+}
+
+table my_table { 
+    reads { L3_hdr[0].stuff : exact ; 
+            L3_hdr[0].stuff mask 0xff : ternary ; 
+    }
+    actions { some_action ; }
+    min_size 1;
+}
+
+"""
+
+        exp_bytes_used = 4
+        pkt = [ i for i in range(exp_bytes_used)]
+
+        try:
+
+            (p4, err, num_bytes_used ) = parse_and_run_test(program, pkt, init_state='start', 
+                                                        init_ctrl='ingress', debug=debug)
+            self.assert_( err=='', 'Saw parse runtime err:' + str(err) )
+            self.assert_( num_bytes_used == exp_bytes_used, 
+                      'Expected %d bytes consumed, Saw %d.' % (exp_bytes_used, num_bytes_used ))
+            self.check_field( p4, 'L3_hdr[0].stuff', 0x10203)
+            self.check_table( p4, 'my_table', min_size=1)
+
+        except GP4.GP4_Exceptions.RuntimeError as err:
+            print "Unexpected Runtime Error:",err.data
+            self.assert_(False)
+        except GP4.GP4_Exceptions.InternalError as err:
+            print "Unexpected Internal Error:",err.data
+            self.assert_(False)
+
+
 
 if __name__ == '__main__':
     # unittest.main()
@@ -72,7 +119,7 @@ if __name__ == '__main__':
 
     if (True):
         single = unittest.TestSuite()
-        single.addTest( test_dev('test200' ))
+        single.addTest( test_dev('test201' ))
         unittest.TextTestRunner().run(single)
 
     else:
