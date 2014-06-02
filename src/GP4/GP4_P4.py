@@ -294,7 +294,7 @@ class P4(object):
         return('', 0, '')
 
 
-    ## Set the specified field in given hdr object to given value
+    ## Get (value,width) from field refs expressed as strings from a switch_field_ref stmt
     # @param self : P4 object
     # @param sw_field_ref : List of strings for switch_field_ref
     # @param bits : Bits object
@@ -343,8 +343,6 @@ class P4(object):
 
         print "get_sw_field_ref_value_and_width(", sw_field_ref,") got",bit_width,"bits: 0x%x" % field_value
         return(field_value, bit_width)
-
-
 
 
     ## Create printable string for Global object

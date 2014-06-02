@@ -84,8 +84,19 @@ def flatten_list_of_strings( expr):
             code += ' ' + flatten_list_of_strings(el)
         return code + ' )'
 
-
-
+## Given a pyparsing field_ref object, return hdr_name, hdr_index and field_name
+# @param field_ref : pyparsing field_ref object
+# @returns ( hdr_name, hdr_index ,field_name ) hdr_index='' if none
+def get_hdr_hdr_index_field_name_from_field_ref(field_ref):
+    """ field_ref is like: [['L3_hdr', '0'], 'stuff']
+                       or: [['L3_simple'], 'stuff']
+    """
+    assert len(field_ref)==2,"Expected fieldref object of length 2. saw %s" % `field_ref`
+    field_name = field_ref[1]
+    hdr_ref    = field_ref[0]
+    hdr_name   = hdr_ref[0]
+    hdr_index  = '' if len(hdr_ref)==1 else hdr_ref[1]
+    return ( hdr_name, hdr_index ,field_name )
 
 # Bits class. Behaves as an ordered sequence of bits.
 
@@ -190,3 +201,13 @@ class Bits(object):
         s = ' '.join(hexL)
         if len(self.bytes)>6: s+= '... (%d more)' % (len(self.bytes) - 6)
         return s
+
+
+# Match_Key class. Used by tables to perorm a match operation.
+class Match_Key(object):
+
+    ## Create new Match_Key object
+    # @param self: the new Match_Key object
+    def __init__(self, value=None, length=0):
+        self.value  = value    # actual binary value of this match key
+        self.length = length   # how many lsb are valid. 0 = field is invalid

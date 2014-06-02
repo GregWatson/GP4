@@ -72,6 +72,7 @@ table my_table {
 header L3_def { fields { stuff : 32; }  }
 
 L3_def L3_hdr[3];
+L3_def L3_simple;
 
 parser start  { extract ( L3_hdr[next] ); 
                 return P4_PARSING_DONE ; }
@@ -83,6 +84,7 @@ control ingress {
 table my_table { 
     reads { L3_hdr[0].stuff : exact ; 
             L3_hdr[0].stuff mask 0xff : ternary ; 
+            L3_simple.stuff mask 0xff : lpm ; 
     }
     actions { some_action ; }
     min_size 1;
