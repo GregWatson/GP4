@@ -175,7 +175,7 @@ def do_valid_header_ref(string, loc, toks):
     hdrL = toks[0]
     hdr_name = hdrL[0]
     hdr_index = hdrL[1] if len(hdrL)>1 else '""'
-    toks[0] = ['p4.check_hdr_inst_is_valid("%s", index=%s)' % (hdr_name, hdr_index) ]
+    toks[0] = ['p4.check_hdr_inst_is_valid("%s", hdr_index=%s)' % (hdr_name, hdr_index) ]
 
 ## construct a get_field_ref object (make code to get value)
 # @param string : String.  Source text
@@ -191,7 +191,7 @@ def do_get_field_ref(string, loc, toks):
     hdr_refL = f_refL[0]
     hdr_name = hdr_refL[0]
     hdr_index = hdr_refL[1] if len(hdr_refL)>1 else '""'
-    toks[0] = ['p4.get_hdr_inst("%s", index=%s).get_field_value("%s")' 
+    toks[0] = ['p4.get_hdr_inst("%s", hdr_index=%s).get_field_value("%s")' 
             % (hdr_name, hdr_index, field_name) ]
 
 

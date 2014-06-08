@@ -46,7 +46,8 @@ class Table(AST_object):
         match_keys = self.create_match_keys(p4)
         #else:
         #    actions = self.default_action
-        for mk in match_keys: print "match_key=",str(mk)
+        if match_keys:
+            for mk in match_keys: print "match_key=",str(mk)
 
 
     ## Construct the match key from current header instances.
