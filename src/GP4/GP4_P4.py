@@ -118,12 +118,12 @@ class P4(object):
     ## Returns the actual named header instance (or stack) or None.
     # @param self : P4 object\
     # @param hdr_name : name of the hdr instance
-    # @param index    : either '' if hdr is scalar or, if stack, stack index number or 'next'
+    # @param hdr_index    : either '' if hdr is scalar or, if stack, stack index number or 'next'
     # @returns header_inst or header_stack object (or None)
-    def get_or_create_hdr_inst(self, hdr_name, index):
+    def get_or_create_hdr_inst(self, hdr_name, hdr_index):
         """ This will create a new stack entry if it does not already exist """
-        #print "get_or_create_hdr_inst:", hdr_name, index
-        if index == '':
+        #print "get_or_create_hdr_inst:", hdr_name, hdr_index
+        if hdr_index == '':
             return self.header_insts.get(hdr_name)  # scalar
         else:
             # stack
@@ -134,7 +134,7 @@ class P4(object):
             if stack.typ != 'header_stack':
                 raise GP4_Exceptions.RuntimeError, \
                          'Error: Header inst "%s" is not a stack.' % hdr_name
-            h_inst = stack.get_or_create_indexed_instance(index)
+            h_inst = stack.get_or_create_indexed_instance(hdr_index)
             if not h_inst:
                 raise GP4_Exceptions.RuntimeError, "stack error: " + hdr_name
             return h_inst
@@ -144,30 +144,42 @@ class P4(object):
     ## Returns hdr object if created, else raise Runtime error
     # @param self : P4 object
     # @param hdr_name : name of the hdr instance
-    # @param index    : either '' if hdr is scalar or, if stack, stack index number
-    # @returns Header_Instance object
-    def get_hdr_inst(self, hdr_name, index):
+    # @param hdr_index    : either '' if hdr is scalar or, if stack, stack index number
+    # @returns Header_Instance object or None or raises RunTime error
+    def get_hdr_inst(self, hdr_name, hdr_index, raiseError=True):
         """ runtime error if hdr doesnt even exist """
-        #print "get_hdr_inst:", hdr_name, index
-        if index == '':
+        #print "get_hdr_inst:", hdr_name, hdr_index
+        if hdr_index == '':
             hdr = self.header_insts.get(hdr_name)  # scalar
             if not hdr:
-                raise GP4_Exceptions.RuntimeError, \
-                         'Error: hdr %s not found.' % hdr_name 
+                if raiseError:
+                    raise GP4_Exceptions.RuntimeError, \
+                             'Error: hdr %s not found.' % hdr_name 
+                else: return None
             return hdr
         else:
             # stack
             stack = self.header_insts.get(hdr_name)
+
             if not stack: 
-                raise GP4_Exceptions.RuntimeError, \
-                         'Error: hdr stack %s not found.' % hdr_name 
+                if raiseError:
+                    raise GP4_Exceptions.RuntimeError, \
+                             'Error: hdr stack %s not found.' % hdr_name 
+                else: return None
+
             if stack.typ != 'header_stack':
-                raise GP4_Exceptions.RuntimeError, \
-                         'Error: hdr %s not defined or else not a stack.' % hdr_name 
-            h_inst = stack.get_indexed_instance(index)
+                if raiseError:
+                    raise GP4_Exceptions.RuntimeError, \
+                             'Error: hdr %s not defined or else not a stack.' % hdr_name 
+                else: return None
+            h_inst = stack.get_indexed_instance(hdr_index)
+
             if not h_inst:
-                raise GP4_Exceptions.RuntimeError, \
-                         'Error: hdr %s not defined.' % hdr_name 
+                if raiseError:
+                    raise GP4_Exceptions.RuntimeError, \
+                             'Error: hdr %s not defined.' % hdr_name 
+                else: return None
+
             return h_inst
 
 
@@ -175,17 +187,17 @@ class P4(object):
     ## Returns bool indicating if hdr inst's fields are created
     # @param self : P4 object
     # @param hdr_name : name of the hdr instance
-    # @param index    : either '' if hdr is scalar or, if stack, stack index number
+    # @param hdr_index    : either '' if hdr is scalar or, if stack, stack index number
     # @returns Boolean
-    def check_hdr_inst_is_valid(self, hdr_name, index):
+    def check_hdr_inst_is_valid(self, hdr_name, hdr_index):
         """ runtime error if hdr doesnt even exist """
-        #print "check_hdr_inst_is_valid:", hdr_name, index
+        #print "check_hdr_inst_is_valid:", hdr_name, hdr_index
         if not self.hdr_inst_defined( hdr_name ):
             raise GP4_Exceptions.RuntimeError, \
                 'Header "%s" not defined.' % hdr_name
         else:
             try:
-                hdr = self.get_hdr_inst( hdr_name, index)
+                hdr = self.get_hdr_inst( hdr_name, hdr_index)
             except GP4_Exceptions.RuntimeError :
                 return False
         return hdr.fields_created
@@ -195,9 +207,9 @@ class P4(object):
     ## Returns bool indicating if stack index is OK
     # @param self : P4 object
     # @param hdr_name : name of the hdr instance
-    # @param index    : stack index number or 'next'
+    # @param hdr_index    : stack index number or 'next'
     # @returns Bool
-    def check_stack_index(self, hdr_name, index):
+    def check_stack_index(self, hdr_name, hdr_index):
         stack = self.header_insts.get(hdr_name)
         if not stack: 
                 raise GP4_Exceptions.RuntimeError, \
@@ -205,7 +217,7 @@ class P4(object):
         if stack.typ != 'header_stack':
                 raise GP4_Exceptions.RuntimeError, \
                          'Error: Header inst "%s" is not a stack.' % hdr_name
-        return stack.is_legal_index(index)
+        return stack.is_legal_index(hdr_index)
 
     
     ## Returns bool indicating if field ref is legal (is a defined field)
@@ -260,7 +272,7 @@ class P4(object):
             if err: return(err, bits_used/8, '')
 
         for f in hdr.fields:
-            num_bits        = get_integer(f.bit_width)
+            num_bits = get_integer(f.bit_width)
 
             if num_bits == 0 : # Need to compute length expression for header.
                 num_bits = hdr.compute_remaining_header_length_bits(self)
@@ -320,7 +332,7 @@ class P4(object):
             # check field name is valid for 'latest'
             if not self.latest.field_has_value(field_name):
                 raise RuntimeError,"Field 'latest.%s' has no value (was not extracted?)" % field_name
-            field_value = self.latest.get_field(field_name)
+            field_value = self.latest.get_field_value(field_name)
             bit_width   = self.latest.get_field_width(field_name)
 
         else:
@@ -338,12 +350,24 @@ class P4(object):
             if not hdr_i.field_has_value(field_name):
                 raise RuntimeError,"Field '%s.%s' is not valid." % (hdr_name, field_name)
 
-            field_value = hdr_i.get_field(field_name)
+            field_value = hdr_i.get_field_value(field_name)
             bit_width   = hdr_i.get_field_width(field_name)
 
         print "get_sw_field_ref_value_and_width(", sw_field_ref,") got",bit_width,"bits: 0x%x" % field_value
         return(field_value, bit_width)
 
+
+    ## Get field object given hdr, hdr_index and field name
+    # @param self : P4 object
+    # @param hdr_name   : String
+    # @param hdr_index  : String
+    # @param field_name : String
+    # @returns field object else None
+    def get_field(self, hdr_name, hdr_index, field_name):
+        hdr_i = self.get_hdr_inst(hdr_name, hdr_index, raiseError=False)
+        if hdr_i: return hdr_i.get_field(field_name)
+        else: return None
+        
 
     ## Create printable string for Global object
     # @param self : Global object

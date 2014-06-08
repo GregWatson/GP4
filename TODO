@@ -1,8 +1,8 @@
-create function to construct the match value from headers. (the "reads" stmt )
-
-check table actions are defined.
-
 Implement : Table Declaration
+
+check table actions are defined when runtime commences.
+
+Need a runtime system to add entries and process packets!
 
 Implement : Action Definitions
  
@@ -20,5 +20,6 @@ DONE
 - Allow hex constants (0x[0-9A-Fa-f]+)
 - Check if-then-else for control func
 - check bool_exprs for control func
+- create function to construct the match value from headers. (the "reads" stmt )
 
 

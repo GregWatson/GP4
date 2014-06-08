@@ -208,6 +208,15 @@ class Match_Key(object):
 
     ## Create new Match_Key object
     # @param self: the new Match_Key object
-    def __init__(self, value=None, length=0):
-        self.value  = value    # actual binary value of this match key
-        self.length = length   # how many lsb are valid. 0 = field is invalid
+    def __init__(self, value=None, length=0, valid=False):
+        self.value  = value    # Integer; actual binary value of this match key
+        self.length = length   # Integer; how many lsb are valid. may be 0 if field is invalid
+        self.valid  = valid    # Boolean; whether key is valid
+
+
+    ## Create string for Match Key
+    # @param self: the new Match_Key object
+    # @return String
+    def __str__(self):
+        if not self.valid: return 'invalid'
+        else: return 'val=0x%x len=%0d' % (self.value, self.length)

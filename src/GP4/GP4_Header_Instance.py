@@ -27,7 +27,7 @@ class Header_Instance(AST_object):
 
         self.fields_created = False   # Bool. Set when fields are actually created (extracted)
         self.fields         = []      # ordered list of Field objects
-        self.field_names    = []      # ordered list of field names
+        self.field_names    = []      # ordered list of field names (Strings)
         self.compute_length = None    # Function to compute length of header. Built at run time.
 
 
@@ -58,6 +58,18 @@ class Header_Instance(AST_object):
         return False
 
 
+    ## Get named field object  <PROBABLY OUGHT TO BE A DICT >
+    # @param self : object
+    # @param field_name : String
+    # @return field : Field object
+    def get_field(self, field_name): 
+
+        for ix,fname in enumerate(self.field_names):
+            if fname == field_name:
+                return self.fields[ix]
+
+        return None    
+
 
     ## Set field to given value
     # @param self : object
@@ -66,11 +78,11 @@ class Header_Instance(AST_object):
     # @return None    
     def set_field(self, field_name, val): 
 
-        for ix,fname in enumerate(self.field_names):
-            if fname == field_name:
-                self.fields[ix].set_value( val )
-                print "set %s.%s to %s" % (self.hdr_inst_name, field_name, val)
-                return
+        field = self.get_field(field_name)
+        if field:
+            field.set_value( val )
+            print "set %s.%s to %s" % (self.hdr_inst_name, field_name, val)
+            return
                 
         assert False,"set_field: Unknown field name %s" % field_name
 
@@ -79,12 +91,12 @@ class Header_Instance(AST_object):
     ## Get value of field
     # @param self : object
     # @param field_name : String
-    # @return val : Integer
-    def get_field(self, field_name): 
+    # @return val : Integer or None if filed not defined.
+    def get_field_value(self, field_name): 
 
-        for ix,fname in enumerate(self.field_names):
-            if fname == field_name:
-                return self.fields[ix].get_value()
+        field = self.get_field(field_name)
+        if field:
+            return field.get_value()
 
         return None
 
@@ -94,9 +106,9 @@ class Header_Instance(AST_object):
     # @return val : Integer
     def get_field_width(self, field_name): 
 
-        for ix,fname in enumerate(self.field_names):
-            if fname == field_name:
-                return self.fields[ix].get_actual_width()
+        field = self.get_field(field_name)
+        if field:
+            return field.get_actual_width()
 
         return 0
 
@@ -156,7 +168,7 @@ class Header_Instance(AST_object):
                     raise GP4_Exceptions.SyntaxError, \
                         "Error: Hdr_decl %s: length expression uses field '%s' which is not in declaration"%\
                         (decl.name, atom)
-                code += 'self.get_field("%s")' % atom
+                code += 'self.get_field_value("%s")' % atom
             else: # value of operator
                 if atom[0].isdigit():
                     code += atom

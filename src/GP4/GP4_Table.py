@@ -46,6 +46,7 @@ class Table(AST_object):
         match_keys = self.create_match_keys(p4)
         #else:
         #    actions = self.default_action
+        for mk in match_keys: print "match_key=",str(mk)
 
 
     ## Construct the match key from current header instances.
@@ -56,30 +57,55 @@ class Table(AST_object):
         if not self.match_key_fun:
             self.match_key_fun = self.compile_match_key_fun(p4)
         return self.match_key_fun(p4)
+
+
        
     ## Compile the self.match_key_fun function
     # @param self : Control_Function object
     # @param p4   : p4 object
-    # @returns function
+    # @returns function f(p4): return  [ Match_Key ]
     def compile_match_key_fun( self, p4 ):
         """ The match_key_fun should return a list of Match_Keys based on the
             current header fields. An undefined field returns a Match_Key with
-            a length of zero.
+            a length of zero. i.e.:
+            match_key_fun(p4) : return [ Match_Key ]
         """
         print "compile_match_key_fun"
+
         # If nothing specified in the "reads" expression then return None
         if not len( self.field_matches ):
             return lambda p4: None
+
+        codeL = [ 'def f(p4):', '   match_keyL = []' ]
         for fm in self.field_matches: 
             print '   ',fm
             assert len(fm)==2 # 0=[hdr,field,mask]  1=type
             mask = 0 if len(fm[0])==1 else fm[0][1]
             field_ref = fm[0][0]
-            hdr, hdr_index, field_name = get_hdr_hdr_index_field_name_from_field_ref(field_ref)
-            print "hdr:",hdr,"hdr_index:",hdr_index,"field:",field_name,"mask:",mask
-            
-            GREG: need code utility to generate python code to check for validity of a field.
-            GREG: need code utility to generate python code to get value of a field.
+
+            hdr_name, hdr_index, field_name = get_hdr_hdr_index_field_name_from_field_ref(field_ref)
+            print "hdr:",hdr_name,"hdr_index:",hdr_index,"field:",field_name,"mask:",mask
+
+            codeL.append( '   field = p4.get_field("%s","%s","%s")' % ( hdr_name, hdr_index, field_name ))
+            codeL.append( '   match_key = field.make_Match_Key() if field else Match_Key()' )
+            if mask:
+                codeL.append( '   if match_key.valid : match_key.value &= %s' % mask)
+            codeL.append( '   match_keyL.append(match_key)')
+
+        codeL.append('   return match_keyL' )
+        
+        for l in codeL: print l
+
+        code = '\n'.join(codeL)
+
+        try: 
+            exec code in globals(), locals()
+        except Exception as ex_err:
+            print "Error: generated code for python function yielded exception:",ex_err.data
+            print "code was <\n",code,"\n>\n"
+            raise GP4_Exceptions.RuntimeError, ex_err.data
+
+        return f
 
 
 

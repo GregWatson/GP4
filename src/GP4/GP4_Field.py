@@ -4,6 +4,7 @@
 ## @package GP4
 
 from GP4_AST_object import AST_object
+from GP4_Utilities  import *
 
 class Field(AST_object):
 
@@ -55,6 +56,13 @@ class Field(AST_object):
         if self.is_valid: return self.valid_bits
         else: return 0
 
+
+    ## Create a Match_Key from self.
+    # @param self  : object
+    # @returns Match_Key
+    def make_Match_Key(self):
+        mk = Match_Key(value=self.value, length=self.valid_bits, valid=self.is_valid)
+        return mk
 
     ## Convert field to a printable string
     # @param self  : object

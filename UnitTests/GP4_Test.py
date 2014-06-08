@@ -90,7 +90,7 @@ class GP4_Test(unittest.TestCase):
         hdr_i = p4.get_or_create_hdr_inst(hdr_name, hdr_index)
         self.assert_( hdr_i,"Unable to find header from field ref:" + field_ref)
 
-        act_val = hdr_i.get_field(field_name)
+        act_val = hdr_i.get_field_value(field_name)
         if act_val == None and val == None: return
 
         self.assert_( act_val != None, 
