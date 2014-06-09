@@ -36,6 +36,8 @@ control ingress {
     apply_table( my_table );
 }
 
+action some_action;
+
 table my_table { 
     actions { some_action ; }
     min_size 23;
@@ -81,19 +83,27 @@ control ingress {
     apply_table( my_table );
 }
 
+action some_action ;   
+action another_action ;   
+
+
 table my_table { 
     reads { L3_hdr[0].stuff : exact ; 
             L3_hdr[0].stuff mask 0xff : ternary ; 
             L3_simple.stuff mask 0xff : lpm ; 
     }
-    actions { some_action ; }
+    actions { some_action ; another_action next_table table2 ; }
     min_size 1;
+}
+
+table table2 {
+    actions { some_action ; }
 }
 
 """
 
         exp_bytes_used = 4
-        pkt = [ i for i in range(exp_bytes_used)]
+        pkt = [ i for i in range(exp_bytes_used) ]
 
         try:
 

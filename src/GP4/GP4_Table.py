@@ -20,20 +20,49 @@ class Table(AST_object):
     # @param min_size : Integer. 
     # @param max_size : Integer. 
     # @returns self
-    def __init__(self, string, loc, name, field_matches=[], actions=[], 
+    def __init__(self, string, loc, name, field_matches=[], actions={}, 
                                           min_size=None, max_size=None ):
         
         super(Table, self).__init__(string, loc, 'table')
 
-        self.name           = name
-        self.field_matches  = field_matches
-        self.actions        = actions
-        self.min_size       = min_size
-        self.max_size       = max_size
-        self.size           = 0      # Actual size. Not same as number of entries.
-        self.num_entries    = 0      # Actual number of entries installed.
-        self.match_key_fun  = None   # function to construct match key List for this Table
-        self.default_action = None   # in case of no matches. set at run time.
+        self.name              = name
+        self.field_matches     = field_matches
+        self.action_next_table = actions # dict maps action name to next_table name 
+                                         #     (or '' if no next_table)
+        self.min_size          = min_size
+        self.max_size          = max_size
+        self.size              = 0      # Actual size. Not same as number of entries.
+        self.num_entries       = 0      # Actual number of entries installed.
+        self.match_key_fun     = None   # function to construct match key List for this Table
+        self.default_action    = None   # in case of no matches. set at run time.
+
+    ## Check self-consistency where possible. More checking is done at run-time.
+    # @param self : table object
+    # @apram p4   : p4 object
+    # @return None. Raises runtime error if there is a problem.
+    def check_self_consistent(self, p4):
+
+        for action in self.action_next_table:
+
+            if not p4.get_action_by_name(action):
+                raise GP4_Exceptions.RuntimeError, 'Table "%s" specifies undefined action "%s"' % \
+                    (self.name, action)
+
+            nxt_table = self.action_next_table[action]  # '' if no next table
+
+            if nxt_table != '':
+                if nxt_table == self.name:  # recursion!
+                    raise GP4_Exceptions.RuntimeError, \
+                        'Table "%s" action "%s" specifies self as next_table: recursion is not allowed.' % \
+                        (self.name, action)
+
+                if not p4.get_table(nxt_table):
+                    raise GP4_Exceptions.RuntimeError, \
+                        'Table "%s" action "%s" specifies undefined next_table "%s"' % \
+                        (self.name, action, nxt_table)
+
+
+
 
     ## Apply this table with a P4 argument as context.
     # @param self : Control_Function object
@@ -44,10 +73,14 @@ class Table(AST_object):
 
         #if self.size:
         match_keys = self.create_match_keys(p4)
-        #else:
-        #    actions = self.default_action
         if match_keys:
             for mk in match_keys: print "match_key=",str(mk)
+
+        #else: # choose default action
+        #    action = self.default_action
+
+
+
 
 
     ## Construct the match key from current header instances.
@@ -117,10 +150,10 @@ class Table(AST_object):
             for el in self.field_matches:
                 s += str(el) + ';'
             s+='\n'
-        if len(self.actions):
-            s+='   Actions:'
-            for el in self.actions:
-                s += str(el) + ';'
+        if len(self.action_next_table):
+            s+='   Actions:\n'
+            for el in self.action_next_table:
+                s += "      Action '%s' => next table '%s';\n" % (el, self.action_next_table[el])
             s+='\n'
 
         return s

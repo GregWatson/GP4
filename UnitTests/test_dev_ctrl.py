@@ -80,6 +80,8 @@ table a_table {    actions { some_action ; } }
 table b_table {    actions { some_action ; } }
 table BAD_table {    actions { some_action ; } }
 
+action some_action;
+
 """
 
         exp_bytes_used = 22
@@ -143,6 +145,8 @@ control ingress {
 
 table GOOD_table {  actions { some_action ; } }
 table BAD_table {    actions { some_action ; } }
+
+action some_action;
 
 """
 

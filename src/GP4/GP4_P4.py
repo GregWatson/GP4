@@ -17,14 +17,25 @@ class P4(object):
         self.header_insts = {} # maps inst name of header_inst to header_inst or header_stack object
         self.parser_functions = {}  # maps parser function name (string) to parse function object
         self.control_functions = {} # maps control function name (string) to control function object
-        self.tables = {} # maps table name to table object
+        self.tables  = {} # maps table name to table object
+        self.actions = {} # maps action name to action object
 
         # run time fields
         self.hdr_extraction_order = []  # list of header objects in the order they were extracted.
         self.latest = None  # latest extracted header in a parser function.
 
 
-    
+
+    ## Check self-consistency where possible. More checking is done at run-time.
+    # @param self : P4 object
+    # @return None. Raises runtime error if there is a problem.
+    def check_self_consistent(self):
+        for tbl_name in self.tables:
+            tbl = self.get_table(tbl_name)
+            if tbl:
+                tbl.check_self_consistent(self)
+            else:
+                raise GP4_Exceptions.RuntimeError, 'Table "%s" undefined' % tbl_name
 
 
     ## Add a new object (e.g. header_decl) to self.
@@ -33,13 +44,12 @@ class P4(object):
     # @return None
     def add_AST_obj(self, ast_obj):
 
-        # print "p4 adding AST obj", ast_obj
-
         try:
             obj_typ = ast_obj.typ
         except AttributeError, err:
             print_syntax_err("Unknown P4 object: '%s'" % str(ast_obj))
-            
+
+        # print "p4 adding AST obj", ast_obj,"of type", ast_obj.typ
 
         if obj_typ == 'header_declaration':
             if ast_obj.name in self.header_decls:
@@ -78,6 +88,13 @@ class P4(object):
 
             self.tables[ast_obj.name] = ast_obj 
 
+        elif ( obj_typ == 'action'):
+            if ast_obj.name in self.actions:
+                print_syntax_err('Action "%s" already defined.' % ast_obj.name,
+                                 ast_obj.string, ast_obj.loc)
+
+            self.actions[ast_obj.name] = ast_obj 
+
         else:
             print "Internal Error: P4:add_AST_obj  Unknown AST_obj", ast_obj.typ
             sys.exit(1)
@@ -112,6 +129,14 @@ class P4(object):
     # @return table object or None
     def get_table(self, table_name):
         return self.tables.get(table_name)
+
+
+    ## Finds the named action and returns the corresponding action object or None
+    # @param self : P4 object
+    # @param action_name : name of the action
+    # @return action object or None
+    def get_action_by_name(self, action_name):
+        return self.actions.get(action_name)
 
 
 

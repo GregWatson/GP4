@@ -9,6 +9,8 @@ import GP4_Header_Stack
 import GP4_Parser_Function
 import GP4_Control_Function
 import GP4_Table
+import GP4_Action
+import GP4_Exceptions
 
 from GP4_Utilities import *
 import sys
@@ -81,7 +83,7 @@ def do_field_declaration(string, loc, toks):
 # @param toks : Tokens.  List of tokens representing this object.
 # @return new token containing the constructed object.
 def do_instance_declaration(string, loc, toks):
-    # print "inst_decl:", toks
+    print "hdr inst_decl:", toks
     assert len(toks)==1,"do_instance_declaration: expected one token"
     inst = toks[0]
     assert len(inst)>1 and len(inst)<4,"do_instance_declaration: unexepcted tokens: %s" % str(toks)
@@ -196,6 +198,20 @@ def do_get_field_ref(string, loc, toks):
 
 
     
+## Construct a dict maopping action names to next_tables. (''Table object
+# @param actions : List of actions. Each action is list of 1 or 2 strings (if next-table)
+# @return new dictionary
+def make_table_actions(actions):
+    d = {}
+    for el in actions:
+        assert len(el),"Expected non-zero length for a Table action"
+        action_name = el[0]
+        next_table  = el[1] if len(el)==2 else ''
+        if action_name in d:
+            raise GP4_Exceptions.RuntimeError('Action name "%s" already defined in Table' % action_name)
+        d[action_name] = next_table
+    return d
+    
 ## construct a Table object
 # @param string : String.  Source text
 # @param loc    : Integer. location in text of this object
@@ -223,7 +239,7 @@ def do_table_declaration(string, loc, toks):
         elif el_type == 'reads':
             field_matches = el[1:]
         elif el_type == 'actions':
-            actions = el[1:]
+            actions = make_table_actions(el[1:])
         else:
             assert False,"Unknown Table element type: %s" % el_type
 
@@ -234,5 +250,25 @@ def do_table_declaration(string, loc, toks):
                 min_size=min_size, 
                 max_size=max_size
             ) ]
+
+
+    
+## construct a Action object
+# @param string : String.  Source text
+# @param loc    : Integer. location in text of this object
+# @param toks   : Tokens.  List of tokens representing this object.
+# @return new token containing the constructed object.
+def do_action_function(string, loc, toks):
+    print "action_function:", toks
+    
+    my_toks = toks.asList()
+    assert len(my_toks)==1
+    action      = my_toks[0]
+    action_name = action[0]
+    return [ GP4_Action.Action( 
+                string, loc, name=action_name
+            ) ]
+                
+
 
 

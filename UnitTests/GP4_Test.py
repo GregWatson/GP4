@@ -48,6 +48,8 @@ def parse_and_run_test(program, pkt, init_state='start', init_ctrl='', debug=0):
         print "Hmmm. Syntax error?"
         sys.exit(1)
   
+    p4.check_self_consistent()
+
     err, bytes_used = parse_packet(p4, pkt, init_state)
 
     if err:

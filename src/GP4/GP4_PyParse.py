@@ -267,27 +267,33 @@ def new_GP4_parser() :
                                 + RBRACE )
     table_declaration.setParseAction( do_table_declaration )
 
+    # --- Action definition ---------------------------------
 
-#
-#table-declaration ::=
-#    table table-name {
-#        [ reads { field-match + } ]
-#        action-specification
-#        [ min_size value ; ]
-#        [ max_size value ; ]
-#    }
-#
-#action-specification ::= 
-#    actions { [ action-name  [ next_table table-name ] ; ] + }
-#
+    #fixme - this is temporary
+    action_function = Group( Suppress('action') + action_name + SEMICOLON )
+    action_function.setParseAction( do_action_function )
 
+
+#  action-function ::= action action-header { action-statement + }
+#  
+#  action-header ::= action-name "(" [ param-name [, param-name]* ] ")"
+#  action-statement ::= action-name "(" [ arg [, arg]* ] ")" ;
+#  arg ::=
+#      param-name |
+#      [-] value |
+#      header-ref |
+#      field-ref |
+#      counter-ref |
+#      meter-ref 
+#  
+#  
 
     # --- P4 definition ------------------------------------
 
-    p4_declaration = (   header_declaration 
+    p4_declaration = (   action_function
+                       | header_declaration 
                        | instance_declaration 
                        | parser_function 
-                       # | action_function 
                        | table_declaration 
                        | control_function
                      )
