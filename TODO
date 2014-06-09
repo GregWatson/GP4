@@ -1,6 +1,3 @@
-Implement : Table Declaration
-
-check table actions are defined when runtime commences.
 
 Need a runtime system to add entries and process packets!
 
@@ -21,5 +18,7 @@ DONE
 - Check if-then-else for control func
 - check bool_exprs for control func
 - create function to construct the match value from headers. (the "reads" stmt )
+- Implement : Table Declaration
+- check table actions are defined when runtime commences.
 
 
