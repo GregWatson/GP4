@@ -25,7 +25,6 @@ class P4(object):
         self.latest = None  # latest extracted header in a parser function.
 
 
-
     ## Check self-consistency where possible. More checking is done at run-time.
     # @param self : P4 object
     # @return None. Raises runtime error if there is a problem.
@@ -280,6 +279,7 @@ class P4(object):
     # @returns None
     def initialize_packet_parser(self):
         self.hdr_extraction_order = []
+        self.latest = None
 
 
     ## Extracts the fields for the specified header from the given Bits object

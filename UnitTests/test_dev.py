@@ -14,7 +14,7 @@ except ImportError, err:
     for p in sys.path: print "\t",p
     print err
 
-from GP4_Test import simple_test, parse_and_run_test, GP4_Test
+from GP4_Test import simple_test, parse_and_run_test, setup_tables_parse_and_run_test, GP4_Test
 
     
 class test_dev(GP4_Test):
@@ -121,6 +121,59 @@ table table2 {
             print "Unexpected Internal Error:",err.data
             self.assert_(False)
 
+    """ Test table add entry and action  -----------------------------------------"""
+    def test202(self, debug=1):
+
+        program = """
+header Hop_count_def { fields { count : 32; }  }
+
+Hop_count_def  hop_count_hdr;
+
+parser start  { extract ( hop_count_hdr ); 
+                return P4_PARSING_DONE ; }
+
+control ingress { 
+    apply_table( my_table );
+}
+
+action inc_count ;   
+
+table my_table { 
+    actions { inc_count ; } 
+}
+
+"""
+
+        setup_cmds  = []   #fixme - need to add default entry to table
+
+        exp_bytes_used = 4
+        pkts = [ [ i for i in range(exp_bytes_used) ] ]
+
+        try:
+
+            (p4, err, num_bytes_used ) = setup_tables_parse_and_run_test(
+                    program, 
+                    setup_cmds,              # List of Runtime cmds
+                    pkts,                    # List of packets
+                    init_state='start',      # parser
+                    init_ctrl='ingress',     # control program start
+                    debug=debug)
+
+            self.assert_( err=='', 'Saw err:' + str(err) )
+            self.assert_( num_bytes_used == exp_bytes_used, 
+                      'Expected %d bytes consumed, Saw %d.' % (exp_bytes_used, num_bytes_used ))
+            self.check_field( p4, 'hop_count_hdr.count', 0x10204)
+
+        except GP4.GP4_Exceptions.RuntimeError as err:
+            print "Unexpected Runtime Error:",err.data
+            self.assert_(False)
+        except GP4.GP4_Exceptions.InternalError as err:
+            print "Unexpected Internal Error:",err.data
+            self.assert_(False)
+
+
+
+
 
 
 if __name__ == '__main__':
@@ -130,7 +183,7 @@ if __name__ == '__main__':
 
     if (True):
         single = unittest.TestSuite()
-        single.addTest( test_dev('test201' ))
+        single.addTest( test_dev('test202' ))
         unittest.TextTestRunner().run(single)
 
     else:

@@ -19,11 +19,6 @@ class Runtime(object):
 
         self.p4 = p4        
 
-        # run time fields per processed packet 
-        self.hdr_extraction_order = []  # list of header objects in the order they were extracted.
-        self.latest = None  # latest extracted header in a parser function.
-
-
 
     ## Parse a packet: i.e. create and populate the headers in our attached P4 object
     # @param self: Runtime object

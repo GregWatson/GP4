@@ -62,6 +62,44 @@ def parse_and_run_test(program, pkt, init_state='start', init_ctrl='', debug=0):
     return (p4, '', bytes_used )
 
 
+
+## Compile and run a GP4 program provided as a string.
+# @param program    : String.  The program.
+# @param setup_cmds : [ runtime_cmds ].  Things to do before parsing the first packet.
+# @param pkts       : [ [ byte ] ] i.e. list of list of integers
+# @param init_state : String. Name of initial parser state
+# @param init_ctrl  : String. Name of initial control function. If None then dont execute
+# @param debug      : Integer. Debug flags
+# @return (p4, err, bytes_used) : (err !=None if error), bytes_used = number of bytes consumed from header.
+def setup_tables_parse_and_run_test( program, setup_cmds=[], pkts=[], 
+                                     init_state='start', init_ctrl='', debug=0):
+
+    p4 = compile_string( program=program )
+
+    if not p4:
+        print "Hmmm. Syntax error?"
+        sys.exit(1)
+
+    runtime = Runtime(p4)
+
+    p4.check_self_consistent()
+
+    total_bytes_used = 0
+
+    for pkt in pkts:
+
+        err, bytes_used = runtime.parse_packet(pkt, init_state)
+
+        if err:
+            return (p4, err, bytes_used)
+
+        if init_ctrl: run_control_function(p4, pkt, init_ctrl )
+
+        total_bytes_used += bytes_used
+
+    return (p4, '', total_bytes_used )
+
+
     
 class GP4_Test(unittest.TestCase):
 
