@@ -8,7 +8,6 @@ import sys, unittest, re
 sys.path.append("/home/gwatson/Work/GP4/src")
 try:
     from GP4.GP4_CompilerHelp import compile_string
-    from GP4.GP4_Packet_Parser import parse_packet
     import GP4.GP4_Exceptions
 except ImportError, err:
     print "Unable to load GP4 libs. sys.path is:"

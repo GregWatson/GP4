@@ -20,7 +20,7 @@ class P4(object):
         self.tables  = {} # maps table name to table object
         self.actions = {} # maps action name to action object
 
-        # run time fields
+        # run time fields per processed packet 
         self.hdr_extraction_order = []  # list of header objects in the order they were extracted.
         self.latest = None  # latest extracted header in a parser function.
 

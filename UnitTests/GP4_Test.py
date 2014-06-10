@@ -8,7 +8,7 @@ import sys, unittest, re
 sys.path.append("/home/gwatson/Work/GP4/src")
 try:
     from GP4.GP4_CompilerHelp  import compile_string
-    from GP4.GP4_Packet_Parser import parse_packet
+    from GP4.GP4_Runtime       import Runtime
     from GP4.GP4_Execute       import run_control_function
 
     import GP4.GP4_Exceptions
@@ -47,10 +47,12 @@ def parse_and_run_test(program, pkt, init_state='start', init_ctrl='', debug=0):
     if not p4:
         print "Hmmm. Syntax error?"
         sys.exit(1)
-  
+
+    runtime = Runtime(p4)
+
     p4.check_self_consistent()
 
-    err, bytes_used = parse_packet(p4, pkt, init_state)
+    err, bytes_used = runtime.parse_packet(pkt, init_state)
 
     if err:
         return (p4, err, bytes_used)
