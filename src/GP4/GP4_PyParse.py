@@ -19,7 +19,7 @@ def new_GP4_parser() :
 
     field_name       = Word(alphas,alphanums+'_')
     header_type_name = Word(alphas,alphanums+'_')
-    decimalnum       = Word(nums)
+    decimalnum       = Word(nums+'-',nums)
     hexnum           = Combine(Literal('0x') + Word(hexnums) )
     value            = hexnum | decimalnum 
     bit_width        = value | Literal("*")
@@ -255,9 +255,9 @@ def new_GP4_parser() :
 
     reads_field_match = Group( Keyword('reads') + LBRACE + OneOrMore( field_match ) + RBRACE )
                 
-    action_next_table =  Group( action_name + Optional( Suppress('next_table') + table_name) + SEMICOLON )
+    action_next_table = Group( action_name + Optional( Suppress('next_table') + table_name) + SEMICOLON )
 
-    action_specification = Group(   Keyword('actions') + LBRACE + OneOrMore( action_next_table ) + RBRACE )
+    action_specification = Group( Keyword('actions') + LBRACE + OneOrMore( action_next_table ) + RBRACE )
 
     table_declaration = Group ( Suppress('table') + table_name + LBRACE 
                                 + Optional( reads_field_match )
@@ -269,24 +269,19 @@ def new_GP4_parser() :
 
     # --- Action definition ---------------------------------
 
-    #fixme - this is temporary
-    action_function = Group( Suppress('action') + action_name + SEMICOLON )
+    param_name = Word(alphas,alphanums+'_')
+
+    arg = value | field_ref | header_ref | param_name # counter_ref | meter_ref 
+
+    action_statement = Group(action_name + LPAREN + delimitedList(arg) + RPAREN + SEMICOLON)
+
+    action_header = Group ( action_name + LPAREN + delimitedList( param_name ) + RPAREN )
+
+    action_function = Group( Suppress('action') + action_header + 
+                             LBRACE + OneOrMore(  action_statement ) + RBRACE
+                           )
+
     action_function.setParseAction( do_action_function )
-
-
-#  action-function ::= action action-header { action-statement + }
-#  
-#  action-header ::= action-name "(" [ param-name [, param-name]* ] ")"
-#  action-statement ::= action-name "(" [ arg [, arg]* ] ")" ;
-#  arg ::=
-#      param-name |
-#      [-] value |
-#      header-ref |
-#      field-ref |
-#      counter-ref |
-#      meter-ref 
-#  
-#  
 
     # --- P4 definition ------------------------------------
 

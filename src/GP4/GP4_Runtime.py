@@ -2,10 +2,12 @@
 #
 ## @package GP4
 
-from GP4_Utilities import print_syntax_err
+from GP4_Utilities import print_syntax_err, show_source_loc
 from GP4_Utilities import Bits
+from pyparsing import ParseException
 #from GP4_P4        import P4
 import GP4_Exceptions
+import GP4_Runtime_PyParse
 import sys
 
 
@@ -17,7 +19,76 @@ class Runtime(object):
     # @return self
     def __init__(self, p4):
 
-        self.p4 = p4        
+        self.p4 = p4
+        self.p4.load_default_actions()
+        self.runtime_parser = None
+
+
+    ## Parse a text cmd (string) supplied by user 
+    # @param self : Runtime object
+    # @param cmd  : String cmd
+    # @return parsed_data  - PyParsing object from GP4_Runtime_PyParse
+    def parse_cmd(self, cmd):
+        print "Runtime parse cmd:",cmd
+
+        if not self.runtime_parser:
+            self.runtime_parser = GP4_Runtime_PyParse.new_GP4_runtime_parser()
+
+        try:
+            parsed_data = self.runtime_parser.parseString(cmd, True)
+
+        except ParseException as err:
+
+            show_source_loc(err.line, err.column)
+            raise GP4_Exceptions.SyntaxError, "Syntax error line %s  column %s" % (str(err.line), str(err.column))
+
+        # Compile the parse tree
+
+        return parsed_data
+
+
+
+
+
+    ## Execute a runtime cmd such as setting a table default value
+    # @param self : Runtime object
+    # @param cmd  : runtime cmd
+    # @return None
+    def run_cmd(self, cmd):
+        ''' Process a parse tree object created by the PyParsing parser.
+            First element is the string name of the cmd type.
+            Uses the dir(self) introspection to find the function named like the cmd.
+            Then invoke that function on the remainder of the parse tree object.
+        '''
+        print "Runtime: executing cmd:",cmd
+
+        parse_tree = self.parse_cmd(cmd)
+        print "Runtime: parse tree is", parse_tree
+
+        obj_type_str = 'do_' + parse_tree[0][0]
+        if obj_type_str not in dir(self):
+            s = "Syntax error: run_cmd: unknown runtime command <%s>\n" %  parse_tree[0]
+            s += "(No method %s). Parse list is:\n" % obj_type_str
+            s += str(parse_tree)
+            raise GP4_Exceptions.SyntaxError(s)
+
+        getattr(self, obj_type_str)(*parse_tree[0][1:])
+
+
+
+
+    ## Execute a table_op cmd. 
+    # @param self : Runtime object
+    # @param cmd  : Pyparse object for table_op
+    # Return None
+    def do_table_op( self, tbl_name, tbl_method, *args):
+        print "called",tbl_name,".",tbl_method,"(",args,")"
+        tbl = self.p4.get_table(tbl_name)
+        if not tbl:
+            raise GP4_Exceptions.RuntimeError, "Unknown table '%s'" % tbl_name
+        
+        getattr(tbl, tbl_method)(*args)
+
 
 
     ## Parse a packet: i.e. create and populate the headers in our attached P4 object

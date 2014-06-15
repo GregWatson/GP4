@@ -1,6 +1,8 @@
 # GP4_Table.py : P4 Table Object
 #
 ## @package GP4
+#
+# This is a table Instance (all Tables are unique)
 
 from GP4_Utilities  import *
 #from GP4_Parser_Function_Code import *
@@ -34,11 +36,22 @@ class Table(AST_object):
         self.size              = 0      # Actual size. Not same as number of entries.
         self.num_entries       = 0      # Actual number of entries installed.
         self.match_key_fun     = None   # function to construct match key List for this Table
-        self.default_action    = None   # in case of no matches. set at run time.
+        self.default_action    = [ 'no_action' ] # [ action_name, [params*] ] Used if no match. Set at run time.
+
+
+    ## Set default action
+    # @param self : table object
+    # @param action : Pyparsing param list
+    # @return None. Raises runtime error if there is a problem.
+    def set_default_action(self, *action):
+        print "Table:",self.name,"setting default action to:", action[0]
+        self.default_action = action[0]
+
+       
 
     ## Check self-consistency where possible. More checking is done at run-time.
     # @param self : table object
-    # @apram p4   : p4 object
+    # @param p4   : p4 object
     # @return None. Raises runtime error if there is a problem.
     def check_self_consistent(self, p4):
 
@@ -71,16 +84,27 @@ class Table(AST_object):
     def apply( self, p4 ):
         print "Applying table", str(self)
 
-        #if self.size:
-        match_keys = self.create_match_keys(p4)
-        if match_keys:
-            for mk in match_keys: print "match_key=",str(mk)
+        if self.size:
+            match_keys = self.create_match_keys(p4)
+            if match_keys:
+                for mk in match_keys: print "match_key=",str(mk)
 
-        #else: # choose default action
-        #    action = self.default_action
-
+            #fixme. Need to get corresponding action and args
 
 
+        else: # choose default action
+            action_args = self.default_action
+            print "No matches. using default action",action_args
+            if not action_args:
+                raise GP4_Exceptions.RuntimeError, "Table '%s' has no default action." % self.name
+        
+        action_name = action_args[0]
+        action = p4.get_action_by_name(action_name)
+        if not action:
+            raise GP4_Exceptions.RuntimeError, "Unknown action '%s'" % action_name
+
+        action.execute(p4, *action_args[1:] )
+        
 
 
     ## Construct the match key from current header instances.

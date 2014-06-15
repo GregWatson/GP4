@@ -84,6 +84,9 @@ def setup_tables_parse_and_run_test( program, setup_cmds=[], pkts=[],
 
     p4.check_self_consistent()
 
+    for cmd in setup_cmds: 
+        runtime.run_cmd(cmd)
+
     total_bytes_used = 0
 
     for pkt in pkts:

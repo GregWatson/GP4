@@ -35,27 +35,31 @@ control ingress {
     apply_table( my_table );
 }
 
-action some_action;
-
 table my_table { 
-    actions { some_action ; }
+    actions { add_to_field ; }
     min_size 23;
     max_size 1024;
 }
 
 """
+        setup_cmds  = ['my_table.set_default_action( add_to_field ( L3_hdr[0].stuff, 1 ))'] 
 
         exp_bytes_used = 4
-        pkt = [ i for i in range(exp_bytes_used)]
+        pkts = [[ i for i in range(exp_bytes_used)]]
 
         try:
+            (p4, err, num_bytes_used ) = setup_tables_parse_and_run_test(
+                    program, 
+                    setup_cmds,              # List of Runtime cmds
+                    pkts,                    # List of packets
+                    init_state='start',      # parser
+                    init_ctrl='ingress',     # control program start
+                    debug=debug)
 
-            (p4, err, num_bytes_used ) = parse_and_run_test(program, pkt, init_state='start', 
-                                                        init_ctrl='ingress', debug=debug)
             self.assert_( err=='', 'Saw parse runtime err:' + str(err) )
             self.assert_( num_bytes_used == exp_bytes_used, 
                       'Expected %d bytes consumed, Saw %d.' % (exp_bytes_used, num_bytes_used ))
-            self.check_field( p4, 'L3_hdr[0].stuff', 0x10203)
+            self.check_field( p4, 'L3_hdr[0].stuff', 0x10204)
             self.check_table( p4, 'my_table', min_size=23, max_size =1024)
 
         except GP4.GP4_Exceptions.RuntimeError as err:
@@ -82,36 +86,36 @@ control ingress {
     apply_table( my_table );
 }
 
-action some_action ;   
-action another_action ;   
-
-
 table my_table { 
     reads { L3_hdr[0].stuff : exact ; 
             L3_hdr[0].stuff mask 0xff : ternary ; 
             L3_simple.stuff mask 0xff : lpm ; 
     }
-    actions { some_action ; another_action next_table table2 ; }
+    actions { add_to_field ; }
     min_size 1;
 }
 
-table table2 {
-    actions { some_action ; }
-}
 
 """
+        setup_cmds  = ['my_table.set_default_action( add_to_field ( L3_hdr[0].stuff, -1 ))'] 
 
         exp_bytes_used = 4
-        pkt = [ i for i in range(exp_bytes_used) ]
+        pkts = [[ i for i in range(exp_bytes_used)]]
 
         try:
 
-            (p4, err, num_bytes_used ) = parse_and_run_test(program, pkt, init_state='start', 
-                                                        init_ctrl='ingress', debug=debug)
+            (p4, err, num_bytes_used ) = setup_tables_parse_and_run_test(
+                    program, 
+                    setup_cmds,              # List of Runtime cmds
+                    pkts,                    # List of packets
+                    init_state='start',      # parser
+                    init_ctrl='ingress',     # control program start
+                    debug=debug)
+
             self.assert_( err=='', 'Saw parse runtime err:' + str(err) )
             self.assert_( num_bytes_used == exp_bytes_used, 
                       'Expected %d bytes consumed, Saw %d.' % (exp_bytes_used, num_bytes_used ))
-            self.check_field( p4, 'L3_hdr[0].stuff', 0x10203)
+            self.check_field( p4, 'L3_hdr[0].stuff', 0x10202)
             self.check_table( p4, 'my_table', min_size=1)
 
         except GP4.GP4_Exceptions.RuntimeError as err:
@@ -136,15 +140,13 @@ control ingress {
     apply_table( my_table );
 }
 
-action inc_count ;   
-
 table my_table { 
-    actions { inc_count ; } 
+    actions { add_to_field ; } 
 }
 
 """
 
-        setup_cmds  = []   #fixme - need to add default entry to table
+        setup_cmds  = ['my_table.set_default_action( add_to_field ( hop_count_hdr.count, 1 ))'] 
 
         exp_bytes_used = 4
         pkts = [ [ i for i in range(exp_bytes_used) ] ]
@@ -170,6 +172,8 @@ table my_table {
         except GP4.GP4_Exceptions.InternalError as err:
             print "Unexpected Internal Error:",err.data
             self.assert_(False)
+        except GP4.GP4_Exceptions.SyntaxError as ex_err:
+            print "Unexpected SyntaxError:", ex_err.data
 
 
 
@@ -183,7 +187,7 @@ if __name__ == '__main__':
 
     if (True):
         single = unittest.TestSuite()
-        single.addTest( test_dev('test202' ))
+        single.addTest( test_dev('test201' ))
         unittest.TextTestRunner().run(single)
 
     else:

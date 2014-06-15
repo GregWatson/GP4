@@ -2,8 +2,9 @@
 #
 ## @package GP4
 
-from GP4_Utilities import print_syntax_err, get_integer
+from GP4_Utilities import print_syntax_err, get_integer, get_hdr_hdr_index_field_name_from_field_ref
 import GP4_Exceptions
+import GP4_Action
 import sys
 
 class P4(object):
@@ -392,6 +393,24 @@ class P4(object):
         hdr_i = self.get_hdr_inst(hdr_name, hdr_index, raiseError=False)
         if hdr_i: return hdr_i.get_field(field_name)
         else: return None
+
+    ## Get field object from field_ref object
+    # @param self    : P4 object
+    # @param field_ref : PyParse field_ref list
+    # @returns field object else None
+    def get_field_from_field_ref(self, field_ref):
+
+        hdr_name, hdr_index ,field_name = get_hdr_hdr_index_field_name_from_field_ref(field_ref)
+        return self.get_field(hdr_name, hdr_index ,field_name)
+
+
+
+    ## Set up the standard built-in actions
+    # @param self : P4 object
+    # @returns None
+    def load_default_actions(self):
+        self.actions['no_action'] = GP4_Action.Action('', 0, 'no_action',GP4_Action.no_action )
+        self.actions['add_to_field'] = GP4_Action.Action('', 0, 'add_to_field', GP4_Action.add_to_field)
         
 
     ## Create printable string for Global object
