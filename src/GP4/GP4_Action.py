@@ -48,7 +48,6 @@ def no_action(p4):
 
 
 
-
 ## Built-in Action add_to_field
 # @param field : field to be added-to
 # @param value : field or constant to add
@@ -60,7 +59,9 @@ def add_to_field(p4, field_ref, fld_or_val):
         raise GP4_Exceptions.RuntimeError, "Unknown field : %s" % str(field_ref)
     
     value = get_value_of_fld_or_val(p4, fld_or_val)
-    fld.set_value(fld.get_value() + value)
+    new_value = fld.get_value() + value
+    print "Set",field_ref,"to 0x%x" % new_value
+    fld.set_value(new_value)
 
 
 
@@ -76,6 +77,6 @@ def get_value_of_fld_or_val(p4, fld_or_val):
     print "get_value_of_fld_or_val", fld_or_val
 
     if type(fld_or_val) is list:  # field_ref
-        return p4.get_field_from_field_ref(fld_or_val)
+        return p4.get_field_from_field_ref(fld_or_val).get_value()
     else:
         return get_integer(fld_or_val)

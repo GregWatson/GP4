@@ -125,15 +125,16 @@ table my_table {
             print "Unexpected Internal Error:",err.data
             self.assert_(False)
 
-    """ Test table add entry and action  -----------------------------------------"""
+    """ Test table add_to_field action with two fields ----------------------------------------"""
     def test202(self, debug=1):
 
         program = """
 header Hop_count_def { fields { count : 32; }  }
 
-Hop_count_def  hop_count_hdr;
+Hop_count_def  hop_count_hdr[2];
 
-parser start  { extract ( hop_count_hdr ); 
+parser start  { extract ( hop_count_hdr[next] ) ; 
+                extract ( hop_count_hdr[next] ) ; 
                 return P4_PARSING_DONE ; }
 
 control ingress { 
@@ -146,9 +147,9 @@ table my_table {
 
 """
 
-        setup_cmds  = ['my_table.set_default_action( add_to_field ( hop_count_hdr.count, 1 ))'] 
+        setup_cmds  = ['my_table.set_default_action( add_to_field ( hop_count_hdr[0].count, hop_count_hdr[1].count ))'] 
 
-        exp_bytes_used = 4
+        exp_bytes_used = 8
         pkts = [ [ i for i in range(exp_bytes_used) ] ]
 
         try:
@@ -164,7 +165,8 @@ table my_table {
             self.assert_( err=='', 'Saw err:' + str(err) )
             self.assert_( num_bytes_used == exp_bytes_used, 
                       'Expected %d bytes consumed, Saw %d.' % (exp_bytes_used, num_bytes_used ))
-            self.check_field( p4, 'hop_count_hdr.count', 0x10204)
+            self.check_field( p4, 'hop_count_hdr[0].count', 0x406080a) # 0x10203 + 0x4050607
+            self.check_field( p4, 'hop_count_hdr[1].count', 0x4050607)
 
         except GP4.GP4_Exceptions.RuntimeError as err:
             print "Unexpected Runtime Error:",err.data
@@ -187,7 +189,7 @@ if __name__ == '__main__':
 
     if (True):
         single = unittest.TestSuite()
-        single.addTest( test_dev('test201' ))
+        single.addTest( test_dev('test202' ))
         unittest.TextTestRunner().run(single)
 
     else:
