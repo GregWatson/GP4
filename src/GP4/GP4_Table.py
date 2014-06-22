@@ -34,10 +34,11 @@ class Table(AST_object):
         self.min_size          = min_size
         self.max_size          = max_size
         self.size              = 0      # Actual size. Not same as number of entries.
+        self.entries           = []     # List of Entry objects
         self.num_entries       = 0      # Actual number of entries installed.
         self.match_key_fun     = None   # function to construct match key List for this Table
         self.default_action    = [ 'no_action' ] # [ action_name, [params*] ] Used if no match. Set at run time.
-
+        
 
     ## Set default action
     # @param self : table object
@@ -78,7 +79,7 @@ class Table(AST_object):
 
 
     ## Apply this table with a P4 argument as context.
-    # @param self : Control_Function object
+    # @param self : table object
     # @param p4   : p4 object
     # @returns None
     def apply( self, p4 ):
@@ -108,7 +109,7 @@ class Table(AST_object):
 
 
     ## Construct the match key from current header instances.
-    # @param self : Control_Function object
+    # @param self : table object
     # @param p4   : p4 object
     # @returns list of Match_Key objects
     def create_match_keys( self, p4 ):
@@ -119,7 +120,7 @@ class Table(AST_object):
 
        
     ## Compile the self.match_key_fun function
-    # @param self : Control_Function object
+    # @param self : table object
     # @param p4   : p4 object
     # @returns function f(p4): return  [ Match_Key ]
     def compile_match_key_fun( self, p4 ):
@@ -164,6 +165,25 @@ class Table(AST_object):
             raise GP4_Exceptions.RuntimeError, ex_err.data
 
         return f
+
+
+
+    ## Runtime command to add an entry to a table
+    # @param self : table object
+    # @param args : Tuple ( entry_list, action_stmt )
+    # @returns None
+    def add_entry( self, *args ):
+        print "add_entry:",args
+        assert len(args)==2
+        entry_list = args[0]
+        action_stmt = args[1]
+
+        #fixme - check entry not already in table.
+        
+        #fixme - create a new Entry with EntryVals=entry_list and action=action_stmt
+        
+        sys.exit(0)
+        
 
 
 

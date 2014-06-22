@@ -178,6 +178,61 @@ table my_table {
             print "Unexpected SyntaxError:", ex_err.data
 
 
+    """ Test runtime adding a table entry and then matching on it -------------------------------"""
+    def test203(self, debug=1):
+
+        program = """
+header Hop_count_def { fields { type: 8 ; count : 32; }  }
+
+Hop_count_def  hop_count_hdr;
+
+parser start  { extract ( hop_count_hdr ) ; 
+                return P4_PARSING_DONE ; }
+
+control ingress { 
+    apply_table( my_table );
+}
+
+table my_table { 
+    reads { hop_count_hdr.type : exact ; }
+    actions { add_to_field ; } 
+}
+
+"""
+        #                                     tuple( match, action ) 
+        setup_cmds  = [  'my_table.set_default_action( add_to_field ( hop_count_hdr.count, 1 ))' ,
+                         'my_table.add_entry( [5], add_to_field ( hop_count_hdr.count, hop_count_hdr.type ) )'
+                      ] 
+
+        exp_bytes_used = 5
+        pkts = [ [ i+5 for i in range(exp_bytes_used) ] ]
+
+        try:
+
+            (p4, err, num_bytes_used ) = setup_tables_parse_and_run_test(
+                    program, 
+                    setup_cmds,              # List of Runtime cmds
+                    pkts,                    # List of packets
+                    init_state='start',      # parser
+                    init_ctrl='ingress',     # control program start
+                    debug=debug)
+
+            self.assert_( err=='', 'Saw err:' + str(err) )
+            self.assert_( num_bytes_used == exp_bytes_used, 
+                      'Expected %d bytes consumed, Saw %d.' % (exp_bytes_used, num_bytes_used ))
+            self.check_field( p4, 'hop_count_hdr.type', 0x5) 
+            self.check_field( p4, 'hop_count_hdr.count', 0x607080e)
+
+        except GP4.GP4_Exceptions.RuntimeError as err:
+            print "Unexpected Runtime Error:",err.data
+            self.assert_(False)
+        except GP4.GP4_Exceptions.InternalError as err:
+            print "Unexpected Internal Error:",err.data
+            self.assert_(False)
+        except GP4.GP4_Exceptions.SyntaxError as ex_err:
+            print "Unexpected SyntaxError:", ex_err.data
+
+
 
 
 
@@ -189,7 +244,7 @@ if __name__ == '__main__':
 
     if (True):
         single = unittest.TestSuite()
-        single.addTest( test_dev('test202' ))
+        single.addTest( test_dev('test203' ))
         unittest.TextTestRunner().run(single)
 
     else:

@@ -203,16 +203,18 @@ class Bits(object):
         return s
 
 
-# Match_Key class. Used by tables to perorm a match operation.
+# Match_Key class. Used by tables to perform a match operation.
 class Match_Key(object):
 
     ## Create new Match_Key object
     # @param self: the new Match_Key object
+    # @param value: Integer.  actual binary value of this match key
+    # @param length: Integer.  how many lsb are valid. may be 0 if field is invalid
+    # @param valid: Boolean.   Whether value and length for this Match_Key are valid.
     def __init__(self, value=None, length=0, valid=False):
         self.value  = value    # Integer; actual binary value of this match key
         self.length = length   # Integer; how many lsb are valid. may be 0 if field is invalid
         self.valid  = valid    # Boolean; whether key is valid
-
 
     ## Create string for Match Key
     # @param self: the new Match_Key object
@@ -220,3 +222,12 @@ class Match_Key(object):
     def __str__(self):
         if not self.valid: return 'invalid'
         else: return 'val=0x%x len=%0d' % (self.value, self.length)
+
+
+# EntryVal class.
+# One or more EntryVals are used to define the value of the entry that is matched against.
+class EntryVal(Match_Key):
+
+    ## Create new EntryVal object
+
+    pass

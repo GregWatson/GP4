@@ -47,13 +47,25 @@ def new_GP4_runtime_parser() :
 
     table_name   = Word(alphas,alphanums+'_')
 
+    # specifies tuple. e.g. (value, mask) for ternary or (value, numbits) for LPM
+    value_tuple = LPAREN + value + COMMA + value + RPAREN
+    match_value = value_tuple | value
+
+    match_value_list = Group(LBRACK + delimitedList(match_value) + RBRACK)
+
     # e.g. my_table.set_default_action( add_to_field ( hop_count_hdr.count, 1 ))
 
     table_set_default_action = Group(  Combine( table_name + Literal('.set_default_action') )
                                       + LPAREN + action_statement + RPAREN
                                     )
 
-    table_op = table_set_default_action.copy()
+    table_add_entry = Group(  Combine( table_name + Literal('.add_entry') )
+                                      + LPAREN 
+                                      + match_value_list + COMMA + action_statement
+                                      + RPAREN
+                                    )
+
+    table_op = table_set_default_action | table_add_entry
     table_op.setParseAction( table_op_action )
 
 

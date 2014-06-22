@@ -63,7 +63,7 @@ def parse_and_run_test(program, pkt, init_state='start', init_ctrl='', debug=0):
 
 
 
-## Compile and run a GP4 program provided as a string.
+## Compile and run a sequence of GP4 Runtime commands provided as strings.
 # @param program    : String.  The program.
 # @param setup_cmds : [ runtime_cmds ].  Things to do before parsing the first packet.
 # @param pkts       : [ [ byte ] ] i.e. list of list of integers
