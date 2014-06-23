@@ -201,7 +201,7 @@ table my_table {
 """
         #                                     tuple( match, action ) 
         setup_cmds  = [  'my_table.set_default_action( add_to_field ( hop_count_hdr.count, 1 ))' ,
-                         'my_table.add_entry( [5], add_to_field ( hop_count_hdr.count, hop_count_hdr.type ) )'
+                         'my_table.add_entry( any, [5], add_to_field ( hop_count_hdr.count, hop_count_hdr.type ) )'
                       ] 
 
         exp_bytes_used = 5

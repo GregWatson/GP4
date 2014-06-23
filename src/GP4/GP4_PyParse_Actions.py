@@ -226,8 +226,8 @@ def do_table_declaration(string, loc, toks):
     name    = table[0]
     actions = []
     field_matches = []
-    min_size = 0
-    max_size = 0
+    min_size = 1
+    max_size = 256
 
     for el in table[1:] :
         assert len(el)>1,"Expected table element to have a type string and a value. Saw %s" % `el`

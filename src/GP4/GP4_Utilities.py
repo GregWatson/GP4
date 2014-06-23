@@ -204,6 +204,7 @@ class Bits(object):
 
 
 # Match_Key class. Used by tables to perform a match operation.
+# Created from the actual header fields of a packet.
 class Match_Key(object):
 
     ## Create new Match_Key object
@@ -224,10 +225,105 @@ class Match_Key(object):
         else: return 'val=0x%x len=%0d' % (self.value, self.length)
 
 
-# EntryVal class.
-# One or more EntryVals are used to define the value of the entry that is matched against.
-class EntryVal(Match_Key):
+# Match_Val class. ########################################################
+# One or more Match_Vals are used to define the value of the entry that is matched against.
+class Match_Val(object):
 
-    ## Create new EntryVal object
+    ## Create new Match_Val object
+    # @param self: the new Match_Val object
+    # @param value: Integer.  actual binary value of this match key
+    # @param mask:  Integer.   If Ternary, mask to apply to match key else None
+    # @param valid: Boolean.   Whether other fields for this Match_Val are valid.
+    def __init__(self, value=None, mask=None, valid=False):
 
-    pass
+        self.value  = value    # Integer; actual binary value of this Match_Val
+        self.mask   = mask     # Integer; If Ternary, mask to apply to match key else None
+        self.valid  = valid    # Boolean; whether other fields are valid
+
+    ## Return True if entry matches the given Match_Key
+    # @param self: Match_Val object
+    # @param match_key : Match_Key
+    # @return Boolean
+    def matches(self, match_key):
+        if not self.valid: return False
+        if not match_key.valid: return False
+
+        if self.mask != None: # Ternary.
+            return match_key.value & self.mask == self.value
+        
+        return  match_key.value == self.value 
+
+
+    def __str__(self):
+        if not self.valid: return 'not valid'
+        s = "val=0x%x" % self.value
+        if self.mask != None: s += " mask=0x%x" % self.mask
+        return s
+
+
+
+
+# Table Entry class ####################################################
+class Entry(object):
+
+    ## Create new Entry object
+    # @param self: the new Entry object
+    # @return self
+    def __init__(self):
+        self.matchList = []
+        self.action    = None
+
+
+    ## Set matchList field to given [ Match_Val ]
+    # @param self: the Entry object
+    # @param matchList :  [ Match_Val ]
+    # @return None
+    def set_matchList(self, matchList=[]):
+        print 'set_matchList: [', 
+        for e in matchList: print e,',',
+        print ']'
+        self.matchList = matchList
+
+    ## Set action field to given action
+    # @param self: the Entry object
+    # @param action : pyparsing action_stmt
+    # @return None
+    def set_action(self, action=[]):
+        print 'set_action:', action
+        self.action = action
+
+    ## Get action field to given action
+    # @param self: the Entry object
+    # @return  Action
+    def get_action(self):
+        return self.action
+
+
+    ## Create the list of Match_Val objects and Create new Entry object
+    # @param self: the new Entry object
+    # @param entry_list : pyparse list of either number or tuple(num,num)
+    # @return [ Match_Val ]
+    def make_match_vals_from_pyparse(self, entry_list):
+        print "make_match_vals_from_pyparse", entry_list
+        L = []
+        for e in entry_list:
+            if type(e) == type('s'): # simple integer 
+                v = get_integer(e)
+                L.append(Match_Val(value=v, valid=True))
+            else:
+                assert len(e)==2 # Tuple of (value, mask)
+                v,m = get_integer(e[0]), get_integer(e[1])
+                L.append(Match_Val(value=v, mask=m,valid=True))
+        return L
+
+
+    ## Return True if entry matches the given list of match_keys
+    # @param self: the Entry object
+    # @param  match_keys : [ Match_Key ]
+    # @return Boolean
+    def matches(self, match_keys=[]):
+        if len(match_keys) != len(self.matchList): return False
+        for (ix, ml) in enumerate(self.matchList):
+            if not ml.matches(match_keys[ix]): return False
+        return True
+

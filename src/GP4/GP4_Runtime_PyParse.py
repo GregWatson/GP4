@@ -46,9 +46,10 @@ def new_GP4_runtime_parser() :
     # --- Table Operations ------------------------------------
 
     table_name   = Word(alphas,alphanums+'_')
+    location     = Keyword('any') | value
 
     # specifies tuple. e.g. (value, mask) for ternary or (value, numbits) for LPM
-    value_tuple = LPAREN + value + COMMA + value + RPAREN
+    value_tuple = Group(LPAREN + value + COMMA + value + RPAREN)
     match_value = value_tuple | value
 
     match_value_list = Group(LBRACK + delimitedList(match_value) + RBRACK)
@@ -61,7 +62,7 @@ def new_GP4_runtime_parser() :
 
     table_add_entry = Group(  Combine( table_name + Literal('.add_entry') )
                                       + LPAREN 
-                                      + match_value_list + COMMA + action_statement
+                                      + location + COMMA + match_value_list + COMMA + action_statement
                                       + RPAREN
                                     )
 

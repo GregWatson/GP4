@@ -18,12 +18,12 @@ class Table(AST_object):
     # @param loc    : Integer. location in text of this object
     # @param name   : String. Name of the Table
     # @param field_matches : List of Pyparsing field_match objects
-    # @param actions  : List of Pyparsing action_next_table objects
+    # @param action_next_table : List of Pyparsing action_next_table objects
     # @param min_size : Integer. 
     # @param max_size : Integer. 
     # @returns self
     def __init__(self, string, loc, name, field_matches=[], actions={}, 
-                                          min_size=None, max_size=None ):
+                                          min_size=1, max_size=256 ):
         
         super(Table, self).__init__(string, loc, 'table')
 
@@ -43,11 +43,11 @@ class Table(AST_object):
     ## Set default action
     # @param self : table object
     # @param action : Pyparsing param list
-    # @return None. Raises runtime error if there is a problem.
+    # @return Bool: Success or Fail
     def set_default_action(self, *action):
         print "Table:",self.name,"setting default action to:", action[0]
         self.default_action = action[0]
-
+        return True
        
 
     ## Check self-consistency where possible. More checking is done at run-time.
@@ -85,17 +85,24 @@ class Table(AST_object):
     def apply( self, p4 ):
         print "Applying table", str(self)
 
-        if self.size:
+        idx = -1
+        if self.num_entries:
             match_keys = self.create_match_keys(p4)
             if match_keys:
                 for mk in match_keys: print "match_key=",str(mk)
 
-            #fixme. Need to get corresponding action and args
+            # get table entry index of first match
+            idx = self.lookup_match_keys(match_keys)
+            if idx != -1: 
+                #print "Matched on idx",idx
+                action_args = self.entries[idx].get_action()
+                #print "action args:", action_args
 
 
-        else: # choose default action
+        if idx == -1: # no match
+            # choose default action
             action_args = self.default_action
-            print "No matches. using default action",action_args
+            #print "No matches. using default action",action_args
             if not action_args:
                 raise GP4_Exceptions.RuntimeError, "Table '%s' has no default action." % self.name
         
@@ -168,27 +175,71 @@ class Table(AST_object):
 
 
 
+    ## Find an entry that matches the match_keys list. Return index or -1 if no match
+    # @param self : table object
+    # @param match_keys : [ Match_Key ]
+    # @returns Integer: index in self.entries or -1 if no match
+    def lookup_match_keys(self, match_keys):
+        print "lookup_match_keys(", 
+        for mk in match_keys: print mk,
+        print ")"
+
+        #fixme - needs to much more efficient
+        for (ix,entry) in enumerate(self.entries):
+            if entry.matches(match_keys):
+                return ix
+        return -1
+
+
+
+
+    ## Check action statement is legal for this table
+    # @param self : table object
+    # @param action_stmt : pyparse action_stmt
+    # @returns Bool: success or Failure
+    def check_action(self, action_stmt):
+        print "check_action:", action_stmt
+        return action_stmt[0] in self.action_next_table.keys()
+
+
+
     ## Runtime command to add an entry to a table
     # @param self : table object
+    # @param pos  : position in table. None = anywhere.
     # @param args : Tuple ( entry_list, action_stmt )
-    # @returns None
-    def add_entry( self, *args ):
-        print "add_entry:",args
+    # @returns Bool: success or Failure
+    def add_entry( self, pos, *args ):
+        print "add_entry: pos=",pos,"args=",args
         assert len(args)==2
-        entry_list = args[0]
+
+        entry_list = args[0]  # [ num | (num,num) ]
         action_stmt = args[1]
 
         #fixme - check entry not already in table.
         
-        #fixme - create a new Entry with EntryVals=entry_list and action=action_stmt
-        
-        sys.exit(0)
-        
+        # create a new Entry with EntryVals=entry_list and action=action_stmt
+        entry = Entry()
+        entry.set_matchList(entry.make_match_vals_from_pyparse(entry_list))
+
+        if not self.check_action(action_stmt):
+            raise GP4_Exceptions.RuntimeError, "Table '%s' cannot do action %s." % (self.name, action_stmt)
+        entry.set_action(action_stmt)
+        if pos == 'any':
+            if self.num_entries >= self.max_size:
+                print "Table",self,"full"
+                return False  # full - cant add more.
+            self.entries.append(entry)
+            self.num_entries += 1
+        else:
+            assert False,"Sorry. table.add_entry to specific location not inmplemented."
+
+        print "add_entry done: Table",self
+        return True        
 
 
 
     def __str__(self):
-        s = self.name + '()\n'
+        s = self.name + '() [min=%d max=%d num=%d]\n' % (self.min_size, self.max_size, self.num_entries)
         if len(self.field_matches):
             s+='   Field matches:'
             for el in self.field_matches:

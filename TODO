@@ -1,12 +1,12 @@
-RT - Need to be able to add an entry to a table. 
-RT - Need to be able to match a table against a computed match key (Creating match key already done)
 
 Compile actions into a dict of named functions in P4.
 These would include the primitive actions.
 User-specified actions would just be added to the set of default primitive actions.
 
-Need a runtime system to add entries and process packets!
+Need to deparse trhe packet
 
+Need a runtime system to add entries and process packets!
+Need efficient table matching
 
 DONE
 - handle set_metadata
@@ -27,4 +27,6 @@ DONE
 - Implement : Action Definitions
 
 - RT - Need to be able to add a default action to a table.
+- RT - Need to be able to add an entry to a table. 
+- RT - Need to be able to match a table against a computed match key (Creating match key already done)
 

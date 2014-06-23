@@ -72,8 +72,9 @@ class Runtime(object):
             s += str(parse_tree)
             raise GP4_Exceptions.SyntaxError(s)
 
-        getattr(self, obj_type_str)(*parse_tree[0][1:])
-
+        if not getattr(self, obj_type_str)(*parse_tree[0][1:]) :
+            raise GP4_Exceptions.RuntimeError, "Cmd failed: %s" % cmd
+            
 
 
 
@@ -87,7 +88,7 @@ class Runtime(object):
         if not tbl:
             raise GP4_Exceptions.RuntimeError, "Unknown table '%s'" % tbl_name
         
-        getattr(tbl, tbl_method)(*args)
+        return getattr(tbl, tbl_method)(*args)
 
 
 
