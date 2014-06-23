@@ -1,3 +1,5 @@
+Check that we can chain tables together
+Check that we can do multiple actions
 
 Compile actions into a dict of named functions in P4.
 These would include the primitive actions.
