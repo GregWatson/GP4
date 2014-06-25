@@ -235,6 +235,136 @@ table my_table {
 
 
 
+    """ Test next_table -------------------------------"""
+    def test204(self, debug=1):
+
+        program = """
+header T1_def { fields { type: 8 ; }  }
+header T2_def { fields { type: 8 ; }  }
+
+T1_def T1;
+T2_def T2;
+
+parser start  { extract ( T1 ) ; extract ( T2 ) ; 
+                return P4_PARSING_DONE ; }
+
+control ingress { 
+    apply_table( table1 );
+}
+
+table table1 { 
+    reads { T1.type : exact ; }
+    actions { add_to_field next_table table2; } 
+}
+
+table table2 { 
+    reads { T2.type : exact; }
+    actions { add_to_field; } 
+}
+
+"""
+        #                
+        setup_cmds  = [  
+                         'table1.add_entry( any, [5], add_to_field( T1.type, 5)  )',
+                         'table2.add_entry( any, [6], add_to_field( T2.type, 22) )'
+                      ] 
+
+        exp_bytes_used = 2
+        pkts = [ [ i+5 for i in range(exp_bytes_used) ] ]
+
+        try:
+
+            (p4, err, num_bytes_used ) = setup_tables_parse_and_run_test(
+                    program, 
+                    setup_cmds,              # List of Runtime cmds
+                    pkts,                    # List of packets
+                    init_state='start',      # parser
+                    init_ctrl='ingress',     # control program start
+                    debug=debug)
+
+            self.assert_( err=='', 'Saw err:' + str(err) )
+            self.assert_( num_bytes_used == exp_bytes_used, 
+                      'Expected %d bytes consumed, Saw %d.' % (exp_bytes_used, num_bytes_used ))
+            self.check_field( p4, 'T1.type', 0xa) 
+            self.check_field( p4, 'T2.type', 28) 
+
+        except GP4.GP4_Exceptions.RuntimeError as err:
+            print "Unexpected Runtime Error:",err.data
+            self.assert_(False)
+        except GP4.GP4_Exceptions.InternalError as err:
+            print "Unexpected Internal Error:",err.data
+            self.assert_(False)
+        except GP4.GP4_Exceptions.SyntaxError as ex_err:
+            print "Unexpected SyntaxError:", ex_err.data
+
+
+
+
+    """ Test 'reads' with a 'valid' field -------------------------------"""
+    def test205(self, debug=1):
+
+        program = """
+header T1_def { fields { type: 8 ; }  }
+header T2_def { fields { type: 8 ; }  }
+
+T1_def T1;
+T2_def T2;
+
+parser start  { extract ( T1 ) ; extract ( T2 ) ; 
+                return P4_PARSING_DONE ; }
+
+control ingress { 
+    apply_table( table1 );
+}
+
+table table1 { 
+    reads { T1.type : valid ; }
+    actions { no_action next_table table2; } 
+}
+
+table table2 { 
+    reads { T2.type : valid ; }
+    actions { add_to_field; } 
+}
+
+"""
+        #                
+        setup_cmds  = [  
+                         'table1.add_entry( any, [1], no_action() )',
+                         'table2.add_entry( any, [2], add_to_field( T2.type, 22) )'
+                      ] 
+
+        exp_bytes_used = 2
+        pkts = [ [ i+5 for i in range(exp_bytes_used) ] ]
+
+        try:
+
+            (p4, err, num_bytes_used ) = setup_tables_parse_and_run_test(
+                    program, 
+                    setup_cmds,              # List of Runtime cmds
+                    pkts,                    # List of packets
+                    init_state='start',      # parser
+                    init_ctrl='ingress',     # control program start
+                    debug=debug)
+
+            self.assert_( err=='', 'Saw err:' + str(err) )
+            self.assert_( num_bytes_used == exp_bytes_used, 
+                      'Expected %d bytes consumed, Saw %d.' % (exp_bytes_used, num_bytes_used ))
+            self.check_field( p4, 'T1.type', 0x5) 
+            self.check_field( p4, 'T2.type', 27) 
+
+        except GP4.GP4_Exceptions.RuntimeError as err:
+            print "Unexpected Runtime Error:",err.data
+            self.assert_(False)
+        except GP4.GP4_Exceptions.InternalError as err:
+            print "Unexpected Internal Error:",err.data
+            self.assert_(False)
+        except GP4.GP4_Exceptions.SyntaxError as ex_err:
+            print "Unexpected SyntaxError:", ex_err.data
+
+
+
+
 
 
 if __name__ == '__main__':
@@ -244,7 +374,7 @@ if __name__ == '__main__':
 
     if (True):
         single = unittest.TestSuite()
-        single.addTest( test_dev('test203' ))
+        single.addTest( test_dev('test204' ))
         unittest.TextTestRunner().run(single)
 
     else:

@@ -94,7 +94,7 @@ class Table(AST_object):
             # get table entry index of first match
             idx = self.lookup_match_keys(match_keys)
             if idx != -1: 
-                #print "Matched on idx",idx
+                print "Table",self.name,"matched on idx",idx
                 action_args = self.entries[idx].get_action()
                 #print "action args:", action_args
 
@@ -113,6 +113,13 @@ class Table(AST_object):
 
         action.execute(p4, *action_args[1:] )
         
+        # If we have a next_table defined for this action then we need to execute it.
+        next_table_name = self.action_next_table.get(action_name)
+        if next_table_name :
+            tbl = p4.get_table(next_table_name)
+            if not tbl:
+                raise GP4_Exceptions.RuntimeError, "Unknown Table '%s'" % next_table_name
+            tbl.apply(p4)
 
 
     ## Construct the match key from current header instances.

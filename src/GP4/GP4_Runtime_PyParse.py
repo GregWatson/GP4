@@ -41,7 +41,7 @@ def new_GP4_runtime_parser() :
 
     arg = value | field_ref | header_ref | param_name # counter_ref | meter_ref 
 
-    action_statement = Group(action_name + LPAREN + delimitedList(arg) + RPAREN )
+    action_statement = Group(action_name + LPAREN + Optional(delimitedList(arg)) + RPAREN )
 
     # --- Table Operations ------------------------------------
 

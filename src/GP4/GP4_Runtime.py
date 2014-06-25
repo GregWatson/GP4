@@ -78,7 +78,7 @@ class Runtime(object):
 
 
 
-    ## Execute a table_op cmd. 
+    ## Execute a RT table_op cmd. 
     # @param self : Runtime object
     # @param cmd  : Pyparse object for table_op
     # Return None
