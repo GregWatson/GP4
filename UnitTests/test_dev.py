@@ -446,6 +446,69 @@ table table2 {
 
 
 
+    """ Test multiple actions -------------------------------"""
+    def test206(self, debug=1):
+
+        program = """
+header T1_def { fields { type: 8 ; }  }
+header T2_def { fields { type: 8 ; }  }
+header T3_def { fields { type: 8 ; }  }
+
+T1_def T1;
+T2_def T2;
+T3_def T3;
+
+parser start  { extract ( T1 ) ;  extract ( T2 ) ;  extract ( T2 ) ;  return P4_PARSING_DONE ; }
+
+control ingress { 
+    apply_table( table1 );
+}
+
+table table1 { 
+    actions { add_T1_to_T2_and_T3 ; } 
+}
+
+action add_T1_to_T2_and_T3( a_field, b_field) { 
+    add_to_field(T2.type, a_field) ; 
+    add_to_field(T3.type, b_field) ; 
+}
+
+"""
+
+        p4, runtime = create_P4_and_runtime(program)
+
+        setup_cmds  = ['table1.set_default_action( add_T1_to_T2_and_T3( T1.type, T1.type ) )'] 
+        run_cmds( p4, runtime, setup_cmds )
+
+        #                
+        exp_bytes_used = 3
+        pkts = [ [ i+5 for i in range(exp_bytes_used) ] ]
+
+        try:
+
+            (err, num_bytes_used ) = process_pkts(
+                    p4,
+                    runtime,
+                    pkts,                    # List of packets
+                    init_state='start',      # parser
+                    init_ctrl='ingress',     # control program start
+                    debug=debug)
+
+            self.assert_( err=='', 'Saw err:' + str(err) )
+            self.assert_( num_bytes_used == exp_bytes_used, 
+                      'Expected %d bytes consumed, Saw %d.' % (exp_bytes_used, num_bytes_used ))
+            self.check_field( p4, 'T1.type', 0x5) 
+            self.check_field( p4, 'T2.type', 11) 
+            self.check_field( p4, 'T3.type', 12) 
+
+        except GP4.GP4_Exceptions.RuntimeError as err:
+            print "Unexpected Runtime Error:",err.data
+            self.assert_(False)
+        except GP4.GP4_Exceptions.InternalError as err:
+            print "Unexpected Internal Error:",err.data
+            self.assert_(False)
+        except GP4.GP4_Exceptions.SyntaxError as ex_err:
+            print "Unexpected SyntaxError:", ex_err.data
 
 
 if __name__ == '__main__':
@@ -455,7 +518,7 @@ if __name__ == '__main__':
 
     if (True):
         single = unittest.TestSuite()
-        single.addTest( test_dev('test205' ))
+        single.addTest( test_dev('test206' ))
         unittest.TextTestRunner().run(single)
 
     else:

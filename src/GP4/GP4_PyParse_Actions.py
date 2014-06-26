@@ -253,7 +253,7 @@ def do_table_declaration(string, loc, toks):
 
 
     
-## construct a Action object
+## construct an Action object
 # @param string : String.  Source text
 # @param loc    : Integer. location in text of this object
 # @param toks   : Tokens.  List of tokens representing this object.
@@ -264,9 +264,11 @@ def do_action_function(string, loc, toks):
     my_toks = toks.asList()
     assert len(my_toks)==1
     action      = my_toks[0]
-    action_name = action[0]
+    action_name = action[0][0]
+    action_args = action[0][1:]
+    print "     action_name=",action_name," args=",action_args," rest=",action[1:]
     return [ GP4_Action.Action( 
-                string, loc, name=action_name
+                string, loc, name=action_name, func_args=action_args, func_body=action[1:]
             ) ]
                 
 

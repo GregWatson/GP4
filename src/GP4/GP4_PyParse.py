@@ -273,9 +273,9 @@ def new_GP4_parser() :
 
     arg = value | field_ref | header_ref | param_name # counter_ref | meter_ref 
 
-    action_statement = Group(action_name + LPAREN + delimitedList(arg) + RPAREN + SEMICOLON)
+    action_statement = Group(action_name + LPAREN + Optional(delimitedList(arg)) + RPAREN + SEMICOLON)
 
-    action_header = Group ( action_name + LPAREN + delimitedList( param_name ) + RPAREN )
+    action_header = Group ( action_name + LPAREN + Optional(delimitedList( param_name )) + RPAREN )
 
     action_function = Group( Suppress('action') + action_header + 
                              LBRACE + OneOrMore(  action_statement ) + RBRACE

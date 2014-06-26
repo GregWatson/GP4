@@ -16,13 +16,18 @@ class Action(AST_object):
     # @param loc    : Integer. location in text of this object
     # @param name   : String. Name of the Action
     # @param func   : Function. Performs the action
+    # @param func_args : [ String ] : formal params from Pyparsing
+    # @param func_body : [ Pyparsing objects ] : action statements from Pyparsing
     # @returns self
-    def __init__(self, string, loc, name, func=None ):
+    def __init__(self, string, loc, name, func=None, func_args=[], func_body = [] ):
         
         super(Action, self).__init__(string, loc, 'action')
 
         self.name = name
+        self.func_args = func_args
+        self.func_body = func_body
         self.func = func   # Function associated with this action. May take params.
+        print "args=", self.func_args," body=",self.func_body
 
     ## Execute the action in the context of P4, given zero or more arguments
     # @param self : object

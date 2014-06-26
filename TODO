@@ -1,3 +1,5 @@
+Implement user defined actions
+Check number of args passed to an action - should match the definition.
 
 Check that we can do multiple actions
 
