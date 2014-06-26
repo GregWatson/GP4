@@ -100,6 +100,7 @@ def get_hdr_hdr_index_field_name_from_field_ref(field_ref):
 
 # Bits class. Behaves as an ordered sequence of bits.
 
+###########################################################################################
 class Bits(object):
 
     bits_mask = [ 0, 0x1, 0x3, 0x7, 0xf, 0x1f, 0x3f, 0x7f, 0xff ]
@@ -202,7 +203,7 @@ class Bits(object):
         if len(self.bytes)>6: s+= '... (%d more)' % (len(self.bytes) - 6)
         return s
 
-
+###########################################################################################
 # Match_Key class. Used by tables to perform a match operation.
 # Created from the actual header fields of a packet.
 class Match_Key(object):
@@ -225,7 +226,9 @@ class Match_Key(object):
         else: return 'val=0x%x len=%0d' % (self.value, self.length)
 
 
-# Match_Val class. ########################################################
+
+#########################################################################################
+# Match_Val class.
 # One or more Match_Vals are used to define the value of the entry that is matched against.
 class Match_Val(object):
 
@@ -263,7 +266,8 @@ class Match_Val(object):
 
 
 
-# Table Entry class ####################################################
+#########################################################################################
+# Table Entry class 
 class Entry(object):
 
     ## Create new Entry object

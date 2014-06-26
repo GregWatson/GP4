@@ -281,6 +281,7 @@ class P4(object):
     def initialize_packet_parser(self):
         self.hdr_extraction_order = []
         self.latest = None
+        for hdr in self.header_insts.keys(): self.header_insts[hdr].initialize()
 
 
     ## Extracts the fields for the specified header from the given Bits object
@@ -420,5 +421,8 @@ class P4(object):
         s = 'P4 object'
         s+= 'Hdr decls:'
         s+= ', '.join(self.header_decls.keys())
+        s+= '\n'
+        s+= 'Hdr insts:'
+        s+= ', '.join(self.header_insts.keys())
         s+= '\n'
         return s

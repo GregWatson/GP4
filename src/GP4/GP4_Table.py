@@ -33,7 +33,7 @@ class Table(AST_object):
                                          #     (or '' if no next_table)
         self.min_size          = min_size
         self.max_size          = max_size
-        self.size              = 0      # Actual size. Not same as number of entries.
+        # self.size              = 0      # Actual size. Not same as number of entries.
         self.entries           = []     # List of Entry objects
         self.num_entries       = 0      # Actual number of entries installed.
         self.match_key_fun     = None   # function to construct match key List for this Table
@@ -152,15 +152,25 @@ class Table(AST_object):
         codeL = [ 'def f(p4):', '   match_keyL = []' ]
         for fm in self.field_matches: 
             print '   ',fm
-            assert len(fm)==2 # 0=[hdr,field,mask]  1=type
+            assert len(fm)==2 # 0=[hdr,field,mask]  1=type (lpm, exact, valid, etc)
             mask = 0 if len(fm[0])==1 else fm[0][1]
             field_ref = fm[0][0]
+            fm_type   = fm[1]
 
             hdr_name, hdr_index, field_name = get_hdr_hdr_index_field_name_from_field_ref(field_ref)
             print "hdr:",hdr_name,"hdr_index:",hdr_index,"field:",field_name,"mask:",mask
 
-            codeL.append( '   field = p4.get_field("%s","%s","%s")' % ( hdr_name, hdr_index, field_name ))
-            codeL.append( '   match_key = field.make_Match_Key() if field else Match_Key()' )
+            # if fm_type is valid then we need to construct Match_key using header.
+
+            if fm_type  == 'valid':
+
+                codeL.append( '   hdr_valid = p4.check_hdr_inst_is_valid("%s","%s")' % ( hdr_name, hdr_index ))
+                codeL.append( '   if hdr_valid: match_key = Match_Key(value = 1, length = 1, valid = True)' )
+                codeL.append( '   else:         match_key = Match_Key(value = 0, length = 1, valid = True)' )
+            else:  # not a 'valid' type. (must be lpm, exact, etc)
+
+                codeL.append( '   field = p4.get_field("%s","%s","%s")' % ( hdr_name, hdr_index, field_name ))
+                codeL.append( '   match_key = field.make_Match_Key("%s") if field else Match_Key()' % fm_type)
             if mask:
                 codeL.append( '   if match_key.valid : match_key.value &= %s' % mask)
             codeL.append( '   match_keyL.append(match_key)')
@@ -214,7 +224,7 @@ class Table(AST_object):
     # @param self : table object
     # @param pos  : position in table. None = anywhere.
     # @param args : Tuple ( entry_list, action_stmt )
-    # @returns Bool: success or Failure
+    # @returns (Bool: success or Failure,   Integer: index where entry was added.)
     def add_entry( self, pos, *args ):
         print "add_entry: pos=",pos,"args=",args
         assert len(args)==2
@@ -231,17 +241,52 @@ class Table(AST_object):
         if not self.check_action(action_stmt):
             raise GP4_Exceptions.RuntimeError, "Table '%s' cannot do action %s." % (self.name, action_stmt)
         entry.set_action(action_stmt)
-        if pos == 'any':
-            if self.num_entries >= self.max_size:
-                print "Table",self,"full"
-                return False  # full - cant add more.
-            self.entries.append(entry)
-            self.num_entries += 1
-        else:
-            assert False,"Sorry. table.add_entry to specific location not inmplemented."
 
-        print "add_entry done: Table",self
-        return True        
+        idx = -1
+        if pos == 'any':
+            idx = len(self.entries)
+            if not self.insert_entry_at(idx, entry) : return (False, 0)
+        else:
+            idx = get_integer(pos)
+            if not self.insert_entry_at(idx, entry) : return (False, idx)
+
+            if idx < len(self.entries): # ok
+                self.entries[idx] = entry
+            else:
+                if idx >= self.max_size:
+                    raise GP4_Exceptions.RuntimeError, "Add_entry: entry %s is beyond max size for table %s." % (pos, self.name)
+                else:
+                    while  idx >= len(self.entries):   self.entries.append(Entry())
+                    self.entries.append(entry)
+
+        print "add_entry: added to idx",idx," Table=",self
+        return (True, idx)        
+
+
+    ## Insert the given Entry at the specified location in self.entries
+    # @param self : table object
+    # @param idx  : position in self.entries array
+    # @param entry : Entry
+    # @returns Bool: success or Failure
+    def insert_entry_at( self, idx, entry  ):
+        if self.num_entries >= self.max_size:
+            print "Table",self,"full"
+            return (False)  # full - cant add more.       
+
+        if idx >= self.max_size:
+            print "Error: trying to add entry beyond '%s' table's max size of %d." % \
+                    (self.name, self.max_size)
+            return False
+
+        if idx < len(self.entries): # ok
+            self.entries[idx] = entry
+
+        else:
+            while  idx >= len(self.entries):   self.entries.append(Entry())
+            self.entries.append(entry)
+
+        self.num_entries += 1
+        return True
 
 
 

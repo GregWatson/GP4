@@ -48,6 +48,16 @@ class Header_Instance(AST_object):
         print "Created fields for",self.hdr_inst_name
         return ''
 
+    ## Initialize hdr instance before parsing a new packet.
+    # @param self : object
+    # @returns None
+    def initialize(self):
+        
+        self.fields_created = False   # Bool. Set when fields are actually created (extracted)
+        self.fields         = []      # ordered list of Field objects
+        self.field_names    = []      # ordered list of field names (Strings)
+   
+
     ## Return bool indicating if specified field name is valid (has value)
     # @param self : object
     # @param String: field_name

@@ -14,7 +14,10 @@ except ImportError, err:
     for p in sys.path: print "\t",p
     print err
 
-from GP4_Test import simple_test, parse_and_run_test, setup_tables_parse_and_run_test, GP4_Test
+from GP4_Test import simple_test, parse_and_run_test, setup_tables_parse_and_run_test, GP4_Test, \
+     create_P4_and_runtime, run_cmds, process_pkts
+
+
 
     
 class test_dev(GP4_Test):
@@ -310,8 +313,15 @@ header T2_def { fields { type: 8 ; }  }
 T1_def T1;
 T2_def T2;
 
-parser start  { extract ( T1 ) ; extract ( T2 ) ; 
-                return P4_PARSING_DONE ; }
+parser start  { extract ( T1 ) ; 
+                return switch (T1.type ) 
+                { 5           : GET_T2 ; 
+                  default     : P4_PARSING_DONE ; 
+                }
+              }
+parser GET_T2 { extract ( T2 ); 
+                return  P4_PARSING_DONE ; 
+              }    
 
 control ingress { 
     apply_table( table1 );
@@ -328,20 +338,24 @@ table table2 {
 }
 
 """
+
+        p4, runtime = create_P4_and_runtime(program)
+
         #                
         setup_cmds  = [  
                          'table1.add_entry( any, [1], no_action() )',
-                         'table2.add_entry( any, [2], add_to_field( T2.type, 22) )'
+                         'table2.add_entry( 1, [1], add_to_field( T2.type, 22) )'
                       ] 
+        run_cmds( p4, runtime, setup_cmds )
 
         exp_bytes_used = 2
         pkts = [ [ i+5 for i in range(exp_bytes_used) ] ]
 
         try:
 
-            (p4, err, num_bytes_used ) = setup_tables_parse_and_run_test(
-                    program, 
-                    setup_cmds,              # List of Runtime cmds
+            (err, num_bytes_used ) = process_pkts(
+                    p4,
+                    runtime,
                     pkts,                    # List of packets
                     init_state='start',      # parser
                     init_ctrl='ingress',     # control program start
@@ -351,7 +365,74 @@ table table2 {
             self.assert_( num_bytes_used == exp_bytes_used, 
                       'Expected %d bytes consumed, Saw %d.' % (exp_bytes_used, num_bytes_used ))
             self.check_field( p4, 'T1.type', 0x5) 
-            self.check_field( p4, 'T2.type', 27) 
+            self.check_field( p4, 'T2.type', 28) 
+
+        except GP4.GP4_Exceptions.RuntimeError as err:
+            print "Unexpected Runtime Error:",err.data
+            self.assert_(False)
+        except GP4.GP4_Exceptions.InternalError as err:
+            print "Unexpected Internal Error:",err.data
+            self.assert_(False)
+        except GP4.GP4_Exceptions.SyntaxError as ex_err:
+            print "Unexpected SyntaxError:", ex_err.data
+
+
+        # Now put in a packet with an unparsed (invalid) T2  (T1.type is not 5)
+
+        exp_bytes_used = 1
+        pkts = [ [ i for i in range(exp_bytes_used) ] ]
+
+        try:
+
+            (err, num_bytes_used ) = process_pkts(
+                    p4,
+                    runtime,
+                    pkts,                    # List of packets
+                    init_state='start',      # parser
+                    init_ctrl='ingress',     # control program start
+                    debug=debug)
+
+            self.assert_( err=='', 'Saw err:' + str(err) )
+            self.assert_( num_bytes_used == exp_bytes_used, 
+                      'Expected %d bytes consumed, Saw %d.' % (exp_bytes_used, num_bytes_used ))
+            self.check_field( p4, 'T1.type', 0x0) 
+
+
+        except GP4.GP4_Exceptions.RuntimeError as err:
+            print "Unexpected Runtime Error:",err.data
+            self.assert_(False)
+        except GP4.GP4_Exceptions.InternalError as err:
+            print "Unexpected Internal Error:",err.data
+            self.assert_(False)
+        except GP4.GP4_Exceptions.SyntaxError as ex_err:
+            print "Unexpected SyntaxError:", ex_err.data
+
+
+        print"\n\n---- Now add an entry that matches on an invalid T2 and adjusts T1.type\n\n"
+
+        # Now add an entry that matches on an invalid T2 and adjusts T1.type
+        setup_cmds  = [  
+                         'table2.add_entry( 2, [0], add_to_field( T1.type, 100) )'
+                      ] 
+        run_cmds( p4, runtime, setup_cmds )
+
+        exp_bytes_used = 1
+        pkts = [ [ 0 for i in range(exp_bytes_used) ] ]
+
+        try:
+
+            (err, num_bytes_used ) = process_pkts(
+                    p4,
+                    runtime,
+                    pkts,                    # List of packets
+                    init_state='start',      # parser
+                    init_ctrl='ingress',     # control program start
+                    debug=debug)
+
+            self.assert_( err=='', 'Saw err:' + str(err) )
+            self.assert_( num_bytes_used == exp_bytes_used, 
+                      'Expected %d bytes consumed, Saw %d.' % (exp_bytes_used, num_bytes_used ))
+            self.check_field( p4, 'T1.type', 100) 
 
         except GP4.GP4_Exceptions.RuntimeError as err:
             print "Unexpected Runtime Error:",err.data
@@ -374,7 +455,7 @@ if __name__ == '__main__':
 
     if (True):
         single = unittest.TestSuite()
-        single.addTest( test_dev('test204' ))
+        single.addTest( test_dev('test205' ))
         unittest.TextTestRunner().run(single)
 
     else:

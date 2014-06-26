@@ -60,7 +60,7 @@ class Field(AST_object):
     ## Create a Match_Key from self.
     # @param self  : object
     # @returns Match_Key
-    def make_Match_Key(self):
+    def make_Match_Key(self, mk_type):
         mk = Match_Key(value=self.value, length=self.valid_bits, valid=self.is_valid)
         return mk
 

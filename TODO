@@ -1,6 +1,4 @@
-Implement correct handling of a "reads" with field:valid - checks that parent header is valid - matches on 1 (valid) or 0 (invalid)
 
-Check that we can chain tables together
 Check that we can do multiple actions
 
 Compile actions into a dict of named functions in P4.
@@ -29,6 +27,9 @@ DONE
 - Implement : Table Declaration
 - check table actions are defined when runtime commences.
 - Implement : Action Definitions
+- Implement correct handling of a "reads" with field:valid - checks that parent header is valid - matches on 1 (valid) or 0 (invalid)
+   Test205
+- Check that we can chain tables together - test205
 
 - RT - Need to be able to add a default action to a table.
 - RT - Need to be able to add an entry to a table. 

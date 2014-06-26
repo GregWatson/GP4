@@ -33,6 +33,24 @@ def simple_test(program, debug=0):
 
     return p4
 
+
+## Create P4 object from program and a runtime to go with it.
+# @param program : String.  The program.
+# @param debug   : Integer. Debug flags
+# @return ( P4 object, runtime object )
+def create_P4_and_runtime(program, debug=0):
+    ''' Given a string (GP4 program) in program, compile it and create P4
+    '''
+    p4 = simple_test(program, debug)
+
+    runtime = Runtime(p4)
+
+    p4.check_self_consistent()
+
+    return (p4 , runtime)
+
+
+
 ## Compile and run a GP4 program provided as a string.
 # @param program : String.  The program.
 # @param pkt     : [ byte ] i.e. list of integers
@@ -74,15 +92,7 @@ def parse_and_run_test(program, pkt, init_state='start', init_ctrl='', debug=0):
 def setup_tables_parse_and_run_test( program, setup_cmds=[], pkts=[], 
                                      init_state='start', init_ctrl='', debug=0):
 
-    p4 = compile_string( program=program )
-
-    if not p4:
-        print "Hmmm. Syntax error?"
-        sys.exit(1)
-
-    runtime = Runtime(p4)
-
-    p4.check_self_consistent()
+    p4, runtime = create_P4_and_runtime(program, debug=0)
 
     for cmd in setup_cmds: 
         runtime.run_cmd(cmd)
@@ -101,6 +111,49 @@ def setup_tables_parse_and_run_test( program, setup_cmds=[], pkts=[],
         total_bytes_used += bytes_used
 
     return (p4, '', total_bytes_used )
+
+
+
+
+## Compile and run a sequence of GP4 Runtime commands provided as strings.
+# @param p4         : p4 object
+# @param runtime    : runtime object
+# @param setup_cmds : [ runtime_cmds ]. 
+# @return None
+def run_cmds( p4, runtime, setup_cmds=[] ):
+
+    for cmd in setup_cmds: 
+        runtime.run_cmd(cmd)
+
+
+
+
+## Given P4 and runtime, process a bunch of packets.
+# @param p4         : p4 object
+# @param runtime    : runtime object
+# @param pkts       : [ [ byte ] ] i.e. list of list of integers
+# @param init_state : String. Name of initial parser state
+# @param init_ctrl  : String. Name of initial control function. If None then dont execute
+# @param debug      : Integer. Debug flags
+# @return ( err, bytes_used) : (err !=None if error), bytes_used = number of bytes consumed from header.
+def process_pkts(p4, runtime, pkts=[], init_state='start', init_ctrl='', debug=0):
+
+    total_bytes_used = 0
+
+    for pkt in pkts:
+
+        err, bytes_used = runtime.parse_packet(pkt, init_state)
+
+        if err:
+            return (err, bytes_used)
+
+        if init_ctrl: run_control_function( p4, pkt, init_ctrl )
+
+        total_bytes_used += bytes_used
+
+    return ('', total_bytes_used )
+
+
 
 
     
