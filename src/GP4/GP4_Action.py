@@ -27,7 +27,8 @@ class Action(AST_object):
         self.func_args = func_args
         self.func_body = func_body
         self.func = func   # Function associated with this action. May take params.
-        print "args=", self.func_args," body=",self.func_body
+        if self.func_body:
+            self.func = self.compile() 
 
     ## Execute the action in the context of P4, given zero or more arguments
     # @param self : object
@@ -39,6 +40,48 @@ class Action(AST_object):
         if not self.func:
             raise GP4_Exceptions.RuntimeError, "Action '%s'\'s function is not yet defined." % self.name
         self.func(p4, *args)
+
+
+    ## Compile a user-defined action. 
+    # @param self : object
+    # @returns None.   Sets self.func
+    def compile(self):
+        """ Body defined in self.func_body and args in self.func_args.
+            Compile a Python function that will execute this and store it in self.func.
+            self.func has signature:   f(p4, *args) and returns nothing.
+        """
+        body = self.func_body
+        args = self.func_args
+        print "    act compile:\n   body=", body,"\n   args=", args
+        
+        codeL = [ 'def f(p4, *args):' ]
+        for fn in body:
+            fn_name = fn[0]
+            print "compiling:",fn
+
+            if len(fn)==1:  # no args
+                code = "   p4.execute_action_by_name('%s')" % fn[0]
+
+            else: # args
+                code = "   p4.execute_action_by_name('%s'" % fn[0]
+
+                for ix,arg in enumerate(fn[1:]):
+                    if len(arg) == 1:
+                        formal = arg[0]
+                        if formal in args:
+                            code += ", args[%d]" % args.index(formal)
+                            continue
+                    code += ", %s" % str(arg)
+
+                code += ')'
+
+            codeL.append(code)
+            
+        # compile the code into a local function
+        fn = compile_list_of_python(codeL)
+        print fn
+        return fn
+
 
 
 #######################

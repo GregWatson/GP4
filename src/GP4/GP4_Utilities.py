@@ -98,6 +98,33 @@ def get_hdr_hdr_index_field_name_from_field_ref(field_ref):
     hdr_index  = '' if len(hdr_ref)==1 else hdr_ref[1]
     return ( hdr_name, hdr_index ,field_name )
 
+
+
+## Convert a list of python stmts into a string and then exec it.
+# @param codeL: list of strings
+# returns lambda(p4, *args)
+def compile_list_of_python(codeL):
+
+    if not len(codeL): 
+        raise GP4_Exceptions.RuntimeError,"No code provided."
+
+    code = '\n'.join(codeL)
+
+    print "compiling", code
+
+    try:
+        exec code
+    except Exception as ex_err:
+        print "Error: generated code for python function yielded exception:",ex_err.data
+        print "code was <\n",code,"\n>\n"
+        raise GP4_Exceptions.RuntimeError, ex_err.data
+
+    return f
+    
+
+
+
+
 # Bits class. Behaves as an ordered sequence of bits.
 
 ###########################################################################################
@@ -202,6 +229,9 @@ class Bits(object):
         s = ' '.join(hexL)
         if len(self.bytes)>6: s+= '... (%d more)' % (len(self.bytes) - 6)
         return s
+
+
+
 
 ###########################################################################################
 # Match_Key class. Used by tables to perform a match operation.

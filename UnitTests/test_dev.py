@@ -458,7 +458,7 @@ T1_def T1;
 T2_def T2;
 T3_def T3;
 
-parser start  { extract ( T1 ) ;  extract ( T2 ) ;  extract ( T2 ) ;  return P4_PARSING_DONE ; }
+parser start  { extract ( T1 ) ;  extract ( T2 ) ;  extract ( T3 ) ;  return P4_PARSING_DONE ; }
 
 control ingress { 
     apply_table( table1 );

@@ -1,4 +1,3 @@
-Implement user defined actions
 Check number of args passed to an action - should match the definition.
 
 Check that we can do multiple actions
@@ -32,6 +31,7 @@ DONE
 - Implement correct handling of a "reads" with field:valid - checks that parent header is valid - matches on 1 (valid) or 0 (invalid)
    Test205
 - Check that we can chain tables together - test205
+- Implement user defined actions
 
 - RT - Need to be able to add a default action to a table.
 - RT - Need to be able to add an entry to a table. 

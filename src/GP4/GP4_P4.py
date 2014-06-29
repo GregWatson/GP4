@@ -138,6 +138,18 @@ class P4(object):
     def get_action_by_name(self, action_name):
         return self.actions.get(action_name)
 
+    ## Finds the named action and then executes it with the given arguments.
+    # @param self : P4 object
+    # @param action_name : name of the action
+    # @param args : args list
+    # @return None
+    def execute_action_by_name(self, action_name, *args):
+        action = self.actions.get(action_name)
+        if not action:
+            raise GP4_Exceptions.RuntimeError, \
+                "Called action %s but that action is not defined." % action_name
+        action.execute(self, *args)
+
 
 
     ## Returns the actual named header instance (or stack) or None.
