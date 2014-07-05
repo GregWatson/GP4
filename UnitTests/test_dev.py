@@ -469,30 +469,30 @@ table table1 {
 }
 
 action add_T1_to_T2_and_T3( a_field, b_field) { 
+
     add_to_field(T2.type, a_field) ; 
     add_to_field(T3.type, b_field) ; 
 }
 
 """
 
-        p4, runtime = create_P4_and_runtime(program)
-
-        setup_cmds  = ['table1.set_default_action( add_T1_to_T2_and_T3( T1.type, T1.type ) )'] 
-        run_cmds( p4, runtime, setup_cmds )
-
-        #                
-        exp_bytes_used = 3
-        pkts = [ [ i+5 for i in range(exp_bytes_used) ] ]
-
         try:
+            p4, runtime = create_P4_and_runtime(program)
+
+            setup_cmds  = ['table1.set_default_action( add_T1_to_T2_and_T3( T1.type, T1.type ) )'] 
+            run_cmds( p4, runtime, setup_cmds )
+
+            #                
+            exp_bytes_used = 3
+            pkts = [ [ i+5 for i in range(exp_bytes_used) ] ]
 
             (err, num_bytes_used ) = process_pkts(
                     p4,
                     runtime,
-                    pkts,                    # List of packets
-                    init_state='start',      # parser
-                    init_ctrl='ingress',     # control program start
-                    debug=debug)
+                    pkts,                       # List of packets
+                    init_state = 'start',       # parser start state
+                    init_ctrl  = 'ingress',     # control program start
+                    debug=debug )
 
             self.assert_( err=='', 'Saw err:' + str(err) )
             self.assert_( num_bytes_used == exp_bytes_used, 
@@ -509,8 +509,12 @@ action add_T1_to_T2_and_T3( a_field, b_field) {
             self.assert_(False)
         except GP4.GP4_Exceptions.SyntaxError as ex_err:
             print "Unexpected SyntaxError:", ex_err.data
+            self.assert_(False)
 
 
+
+
+########################################################################################
 if __name__ == '__main__':
     # unittest.main()
     # can run all tests in dir via:

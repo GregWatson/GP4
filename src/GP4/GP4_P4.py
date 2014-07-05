@@ -37,6 +37,13 @@ class P4(object):
             else:
                 raise GP4_Exceptions.RuntimeError, 'Table "%s" undefined' % tbl_name
 
+        for action_name in self.actions:
+            action = self.get_action_by_name(action_name)
+            if action:
+                action.check_self_consistent(self)
+            else:
+                raise GP4_Exceptions.RuntimeError, 'Action "%s" undefined' % action_name
+
 
     ## Add a new object (e.g. header_decl) to self.
     # @param self : P4 object
@@ -422,8 +429,8 @@ class P4(object):
     # @param self : P4 object
     # @returns None
     def load_default_actions(self):
-        self.actions['no_action'] = GP4_Action.Action('', 0, 'no_action',GP4_Action.no_action )
-        self.actions['add_to_field'] = GP4_Action.Action('', 0, 'add_to_field', GP4_Action.add_to_field)
+        self.actions['no_action'] = GP4_Action.Action('', 0, 'no_action',GP4_Action.no_action, num_args=0 )
+        self.actions['add_to_field'] = GP4_Action.Action('', 0, 'add_to_field', GP4_Action.add_to_field, num_args=2)
         
 
     ## Create printable string for Global object

@@ -18,17 +18,29 @@ class Action(AST_object):
     # @param func   : Function. Performs the action
     # @param func_args : [ String ] : formal params from Pyparsing
     # @param func_body : [ Pyparsing objects ] : action statements from Pyparsing
+    # @param num_args  : Integer. Number of args if primitive (auto deduced for user defined actions)
     # @returns self
-    def __init__(self, string, loc, name, func=None, func_args=[], func_body = [] ):
+    def __init__(self, string, loc, name, func=None, func_args=[], func_body = [], num_args=0 ):
         
         super(Action, self).__init__(string, loc, 'action')
 
-        self.name = name
+        self.name      = name
         self.func_args = func_args
         self.func_body = func_body
-        self.func = func   # Function associated with this action. May take params.
+        self.num_args  = num_args 
+        if len(func_args): self.num_args =  len(func_args)
+        self.func      = func   # Function associated with this action. May take params.
+
+   
+    ## Compile action if not already compiled.
+    # @param self : object
+    # @param p4   : p4 object
+    # @returns None
+    def check_self_consistent(self, p4):
+        print "Action", self.name,"check self consistent."
         if self.func_body:
-            self.func = self.compile() 
+            self.func = self.compile(p4) 
+
 
     ## Execute the action in the context of P4, given zero or more arguments
     # @param self : object
@@ -45,10 +57,22 @@ class Action(AST_object):
     ## Compile a user-defined action. 
     # @param self : object
     # @returns None.   Sets self.func
-    def compile(self):
+    def compile(self, p4):
         """ Body defined in self.func_body and args in self.func_args.
             Compile a Python function that will execute this and store it in self.func.
             self.func has signature:   f(p4, *args) and returns nothing.
+
+            Replace formal params with arg[i]
+            So the user defined action:
+
+                do_action( arg1, arg2 ) {
+                    modify_field( arg1, 0x33, arg2 )
+                }
+
+            becomes the Python code:
+
+                def f(p4, *args):
+                    p4.execute_action_by_name('modify_field', args[0], 0x33, args[1])
         """
         body = self.func_body
         args = self.func_args
@@ -58,6 +82,16 @@ class Action(AST_object):
         for fn in body:
             fn_name = fn[0]
             print "compiling:",fn
+            action = p4.get_action_by_name(fn_name)
+            if not action:
+                raise GP4_Exceptions.RuntimeError, 'In action "%s" call to action "%s" undefined' % \
+                    (self.name, fn_name)
+
+            num_fn_args = len(fn)-1
+            if num_fn_args != action.num_args:
+                raise GP4_Exceptions.RuntimeError, 'In action "%s" call to action "%s" has %d args but expected %d.' % \
+                    (self.name, fn_name, num_fn_args, action.num_args)
+            
 
             if len(fn)==1:  # no args
                 code = "   p4.execute_action_by_name('%s')" % fn[0]
@@ -66,7 +100,7 @@ class Action(AST_object):
                 code = "   p4.execute_action_by_name('%s'" % fn[0]
 
                 for ix,arg in enumerate(fn[1:]):
-                    if len(arg) == 1:
+                    if len(arg) == 1:  # only check to see if its a formal arg if it has length 1
                         formal = arg[0]
                         if formal in args:
                             code += ", args[%d]" % args.index(formal)

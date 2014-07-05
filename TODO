@@ -1,4 +1,3 @@
-Check number of args passed to an action - should match the definition.
 
 Check that we can do multiple actions
 
@@ -32,6 +31,7 @@ DONE
    Test205
 - Check that we can chain tables together - test205
 - Implement user defined actions
+- Check number of args passed to an action - should match the definition.
 
 - RT - Need to be able to add a default action to a table.
 - RT - Need to be able to add an entry to a table. 
