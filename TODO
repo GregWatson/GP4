@@ -9,6 +9,10 @@ User-specified actions would just be added to the set of default primitive actio
 
 Need to deparse trhe packet
 
+Implement full set of tables (lpm, etc)
+
+Implement counters, meters, stateful memories
+
 Need a runtime system to add entries and process packets!
 Need efficient table matching
 
