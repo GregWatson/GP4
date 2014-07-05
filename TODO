@@ -1,5 +1,4 @@
-
-Check that we can do multiple actions
+Need to deparse the packet
 
 Implement the std action set.
 
@@ -7,7 +6,6 @@ Compile actions into a dict of named functions in P4.
 These would include the primitive actions.
 User-specified actions would just be added to the set of default primitive actions.
 
-Need to deparse trhe packet
 
 Implement full set of tables (lpm, etc)
 
