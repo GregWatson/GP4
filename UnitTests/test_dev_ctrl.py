@@ -45,8 +45,8 @@ control my_ctrl_fun { apply_table( fred);  }
     def test102(self, debug=1):
 
         program = """
-header L2_def { fields { DA : 48; SA : 48; EthType : 16; }  }
-header L3_def { fields { stuff : 32; }  }
+layout L2_def { fields { DA : 48; SA : 48; EthType : 16; }  }
+layout L3_def { fields { stuff : 32; }  }
 
 L2_def L2_hdr;
 L3_def L3_hdr[3];
@@ -109,8 +109,8 @@ table BAD_table {    actions { add_to_field ; } }
     def test103(self, debug=1):
 
         program = """
-header L2_def { fields { DA : 48; SA : 48; EthType : 16; }  }
-header L3_def { fields { byte1 : 8; byte2 : 8; }  }
+layout L2_def { fields { DA : 48; SA : 48; EthType : 16; }  }
+layout L3_def { fields { byte1 : 8; byte2 : 8; }  }
 
 L2_def L2_hdr;
 L3_def L3_hdr[3];
@@ -184,7 +184,7 @@ if __name__ == '__main__':
 
     else:
         program = """
-header L2_def {    fields { DA : 48; SA : 48; }   }
+layout L2_def {    fields { DA : 48; SA : 48; }   }
 L2_def L2_hdr[1];
 parser start  { extract ( L2_hdr[0] ) ;
                 return P4_ERR ;

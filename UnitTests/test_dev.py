@@ -27,7 +27,7 @@ class test_dev(GP4_Test):
     def test200(self, debug=1):
 
         program = """
-header L3_def { fields { stuff : 32; }  }
+layout L3_def { fields { stuff : 32; }  }
 
 L3_def L3_hdr[3];
 
@@ -77,7 +77,7 @@ table my_table {
     def test201(self, debug=1):
 
         program = """
-header L3_def { fields { stuff : 32; }  }
+layout L3_def { fields { stuff : 32; }  }
 
 L3_def L3_hdr[3];
 L3_def L3_simple;
@@ -132,7 +132,7 @@ table my_table {
     def test202(self, debug=1):
 
         program = """
-header Hop_count_def { fields { count : 32; }  }
+layout Hop_count_def { fields { count : 32; }  }
 
 Hop_count_def  hop_count_hdr[2];
 
@@ -185,7 +185,7 @@ table my_table {
     def test203(self, debug=1):
 
         program = """
-header Hop_count_def { fields { type: 8 ; count : 32; }  }
+layout Hop_count_def { fields { type: 8 ; count : 32; }  }
 
 Hop_count_def  hop_count_hdr;
 
@@ -242,8 +242,8 @@ table my_table {
     def test204(self, debug=1):
 
         program = """
-header T1_def { fields { type: 8 ; }  }
-header T2_def { fields { type: 8 ; }  }
+layout T1_def { fields { type: 8 ; }  }
+layout T2_def { fields { type: 8 ; }  }
 
 T1_def T1;
 T2_def T2;
@@ -307,8 +307,8 @@ table table2 {
     def test205(self, debug=1):
 
         program = """
-header T1_def { fields { type: 8 ; }  }
-header T2_def { fields { type: 8 ; }  }
+layout T1_def { fields { type: 8 ; }  }
+layout T2_def { fields { type: 8 ; }  }
 
 T1_def T1;
 T2_def T2;
@@ -450,9 +450,9 @@ table table2 {
     def test206(self, debug=1):
 
         program = """
-header T1_def { fields { type: 8 ; }  }
-header T2_def { fields { type: 8 ; }  }
-header T3_def { fields { type: 8 ; }  }
+header_type T1_def { fields { type: 8 ; }  }
+layout      T2_def { fields { type: 8 ; }  }
+layout      T3_def { fields { type: 8 ; }  }
 
 T1_def T1;
 T2_def T2;
@@ -517,9 +517,9 @@ action add_T1_to_T2_and_T3( a_field, b_field) {
     def test207(self, debug=1):
 
         program = """
-header T1_def { fields { type: 8 ; }  }
-header T2_def { fields { type: 8 ; }  }
-header T3_def { fields { type: 8 ; }  }
+layout T1_def { fields { type: 8 ; }  }
+layout T2_def { fields { type: 8 ; }  }
+layout T3_def { fields { type: 8 ; }  }
 
 T1_def T1;
 T2_def T2;
@@ -541,16 +541,16 @@ action add_T1_to_T2_and_T3( a_field, b_field) {
 
 """
 
-        p4, runtime = create_P4_and_runtime(program)
-
-        setup_cmds  = ['table1.set_default_action( add_T1_to_T2_and_T3( T1.type ) )'] 
-        run_cmds( p4, runtime, setup_cmds )
-
-        #                
-        exp_bytes_used = 3
-        pkts = [ [ i+5 for i in range(exp_bytes_used) ] ]
-
         try:
+            p4, runtime = create_P4_and_runtime(program)
+
+            setup_cmds  = ['table1.set_default_action( add_T1_to_T2_and_T3( T1.type ) )'] 
+            run_cmds( p4, runtime, setup_cmds )
+
+            #                
+            exp_bytes_used = 3
+            pkts = [ [ i+5 for i in range(exp_bytes_used) ] ]
+
 
             (err, num_bytes_used ) = process_pkts(
                     p4,
@@ -580,12 +580,12 @@ if __name__ == '__main__':
 
     if (True):
         single = unittest.TestSuite()
-        single.addTest( test_dev('test207' ))
+        single.addTest( test_dev('test206' ))
         unittest.TextTestRunner().run(single)
 
     else:
         program = """
-header L2_def {    fields { DA : 48; SA : 48; }   }
+layout L2_def {    fields { DA : 48; SA : 48; }   }
 L2_def L2_hdr[1];
 parser start  { extract ( L2_hdr[0] ) ;
                 return P4_ERR ;

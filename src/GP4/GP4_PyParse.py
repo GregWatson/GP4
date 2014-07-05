@@ -54,8 +54,9 @@ def new_GP4_parser() :
                               + Optional( hdr_length_option )
                               + Optional( hdr_max_length_option )
                             )
+    header_dec_keyword = Keyword('header_type') | Keyword('layout')
 
-    header_declaration = Group (  Suppress ('header') 
+    header_declaration = Group (  Suppress (header_dec_keyword) 
                                 + header_type_name 
                                 + LBRACE + header_dec_body + RBRACE
                                )

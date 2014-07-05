@@ -24,7 +24,7 @@ class test_dev(GP4_Test):
 
         program = """
 
-header vlan_tag {
+layout vlan_tag {
     fields {
         pcp : 3 signed, saturating;
         vid : 12;
@@ -35,7 +35,7 @@ header vlan_tag {
     max_length 33;
 }
 
-header hdr2 {fields { a : 8 ; } }
+layout hdr2 {fields { a : 8 ; } }
 
 vlan_tag metadata vlan_instance;
 vlan_tag vlan_instance_stack [ 5 ]; 
@@ -47,7 +47,7 @@ vlan_tag vlan_instance_stack [ 5 ];
     """ Test syntax error handling ---------------------------------------------------"""
     def test2(self, debug=1): 
 
-        program = """ header vlan_tag { }"""
+        program = """ layout vlan_tag { }"""
         try:
             p4 = simple_test(program, debug=debug)
         except GP4.GP4_Exceptions.SyntaxError,err:
@@ -83,10 +83,10 @@ parser do_stuff { extract ( L2_hdr ) ;
     def test4(self, debug=1):
 
         program = """
-header L2_def {
+layout L2_def {
     fields { DA : 48; SA : 48; }
 }
-header L9_def {
+layout L9_def {
     fields { type : 5; three_bits : 3; }
 }
 
@@ -115,7 +115,7 @@ parser DO_L9  { extract ( L9_hdr ) ;
     def test5(self, debug=1):
 
         program = """
-header L2_def {
+layout L2_def {
     fields { DA : 48; SA : 48; }
 }
 
@@ -140,7 +140,7 @@ parser DO_L2  { extract ( L2_hdr[next] ) ;
     def test5a(self, debug=1):
 
         program = """
-header L2_def {
+layout L2_def {
     fields { DA : 48; SA : 48; }
 }
 
@@ -164,7 +164,7 @@ parser start  { extract ( L2_hdr[2] ) ;  /* out of range */
     def test5b(self, debug=1):
 
         program = """
-header L2_def {
+layout L2_def {
     fields { DA : 48; SA : 48; }
 }
 
@@ -191,7 +191,7 @@ parser P4_ERR { extract ( L2_hdr[next] ) ;  /* out of range */
     def test5c(self, debug=1):
 
         program = """
-header L2_def {    fields { DA : 48; SA : 48; }   }
+layout L2_def {    fields { DA : 48; SA : 48; }   }
 L2_def L2_hdr[1];
 parser start  { extract ( L2_hdr[0] ) ;
                 return P4_ERR ;
@@ -210,7 +210,7 @@ parser start  { extract ( L2_hdr[0] ) ;
     def test6(self, debug=1):
 
         program = """
-header L2_def {
+layout L2_def {
     fields { DA : 48; SA : 48; }
 }
 
@@ -264,10 +264,10 @@ parser GET_L2_4  { extract ( L2_hdr[4] ) ;
     def test7(self, debug=1):
 
         program = """
-header L2_def {
+layout L2_def {
     fields { DA : 48; SA : 48; }
 }
-header meta_def {
+layout meta_def {
     fields { number: 32 ; unused : 64;}
 }
 
@@ -308,10 +308,10 @@ parser GET_META  { set_metadata ( meta_hdr.number, 1234 ) ;
     def test8(self, debug=1):
 
         program = """
-header L2_def { fields { type0: 8; }    }
-header L3_def { fields { jjj: 8;   }    }
-header Type_0 { fields { type1: 8; }    }
-header Type_1 { fields { four: 32; }    }
+layout L2_def { fields { type0: 8; }    }
+layout L3_def { fields { jjj: 8;   }    }
+layout Type_0 { fields { type1: 8; }    }
+layout Type_1 { fields { four: 32; }    }
 
 L2_def    L2_hdr;
 L3_def    L3_hdr[3];
@@ -364,9 +364,9 @@ parser GET_TYPE1 { extract ( Type_1_hdr ) ;
     def test8a(self, debug=1):
 
         program = """
-header L2_def  { fields { type0: 8; }    }
-header bad_def { fields { jjj: 8;   }    }
-header Type_1  { fields { four: 32; }    }
+layout L2_def  { fields { type0: 8; }    }
+layout bad_def { fields { jjj: 8;   }    }
+layout Type_1  { fields { four: 32; }    }
 
 L2_def    L2_hdr;
 bad_def   bad_hdr;
@@ -412,9 +412,9 @@ parser GET_NEXT4 { extract ( Type_1_hdr ) ;
     def test8b(self, debug=1):
 
         program = """
-header L2_def  { fields { type0: 8; }    }
-header bad_def { fields { jjj: 8;   }    }
-header Type_1  { fields { four: 32; }    }
+layout L2_def  { fields { type0: 8; }    }
+layout bad_def { fields { jjj: 8;   }    }
+layout Type_1  { fields { four: 32; }    }
 
 L2_def    L2_hdr;
 bad_def   bad_hdr;
@@ -460,7 +460,7 @@ parser SECOND { extract ( Type_1_hdr ) ;
     def test9(self, debug=1):
 
         program = """
-header L2_def  { fields { len: 8;
+layout L2_def  { fields { len: 8;
                           other: 16; 
                           data: *;
                         }
@@ -506,7 +506,7 @@ parser start  {
     def test9a(self, debug=1):
 
         program = """
-header L2_def  { fields { len: 8;
+layout L2_def  { fields { len: 8;
                           other: 16; 
                           data: *;
                         }
@@ -546,7 +546,7 @@ parser start  {
     def test10(self, debug=1):
 
         program = """
-header L2_def  { fields { len: 0x8;
+layout L2_def  { fields { len: 0x8;
                           other: 0x10; 
                           data: *;
                         }
@@ -600,7 +600,7 @@ if __name__ == '__main__':
 
     else:
         program = """
-header L2_def {    fields { DA : 48; SA : 48; }   }
+layout L2_def {    fields { DA : 48; SA : 48; }   }
 L2_def L2_hdr[1];
 parser start  { extract ( L2_hdr[0] ) ;
                 return P4_ERR ;
