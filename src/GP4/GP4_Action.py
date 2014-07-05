@@ -79,6 +79,10 @@ class Action(AST_object):
         print "    act compile:\n   body=", body,"\n   args=", args
         
         codeL = [ 'def f(p4, *args):' ]
+        codeL.append('   if len(args) != %d:' % len(args))
+        codeL.append('      raise GP4_Exceptions.RuntimeError, \\')
+        codeL.append('          "Action ' + self.name + ' expected %d' % len(args) + r' args but was passed %d args." % len(args)')
+
         for fn in body:
             fn_name = fn[0]
             print "compiling:",fn
@@ -113,7 +117,6 @@ class Action(AST_object):
             
         # compile the code into a local function
         fn = compile_list_of_python(codeL)
-        print fn
         return fn
 
 

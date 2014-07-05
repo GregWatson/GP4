@@ -1,6 +1,8 @@
 
 Check that we can do multiple actions
 
+Implement the std action set.
+
 Compile actions into a dict of named functions in P4.
 These would include the primitive actions.
 User-specified actions would just be added to the set of default primitive actions.
@@ -32,6 +34,7 @@ DONE
 - Check that we can chain tables together - test205
 - Implement user defined actions
 - Check number of args passed to an action - should match the definition.
+- Can we do checking on actions to verify that sub-actions exist? (consistency check)
 
 - RT - Need to be able to add a default action to a table.
 - RT - Need to be able to add an entry to a table. 
