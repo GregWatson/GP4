@@ -423,14 +423,28 @@ class P4(object):
         hdr_name, hdr_index ,field_name = get_hdr_hdr_index_field_name_from_field_ref(field_ref)
         return self.get_field(hdr_name, hdr_index ,field_name)
 
+    ## Get header instance object from field_ref object
+    # @param self    : P4 object
+    # @param field_ref : PyParse field_ref list
+    # @returns header Instance object else None
+    def get_header_from_field_ref(self, field_ref):
+        hdr_name, hdr_index ,field_name = get_hdr_hdr_index_field_name_from_field_ref(field_ref)
+        hdr_i = self.get_hdr_inst(hdr_name, hdr_index, raiseError=False)
+        if hdr_i: return hdr_i
+        else: return None
+
 
 
     ## Set up the standard built-in actions
     # @param self : P4 object
     # @returns None
     def load_default_actions(self):
-        self.actions['no_action'] = GP4_Action.Action('', 0, 'no_action',GP4_Action.no_action, num_args=0 )
-        self.actions['add_to_field'] = GP4_Action.Action('', 0, 'add_to_field', GP4_Action.add_to_field, num_args=2)
+        self.actions['no_action'] = \
+             GP4_Action.Action('', 0, 'no_action',GP4_Action.no_action, num_args=0 )
+        self.actions['add_to_field'] = \
+            GP4_Action.Action('', 0, 'add_to_field', GP4_Action.add_to_field, num_args=2)
+        self.actions['modify_field'] = \
+            GP4_Action.Action('', 0, 'modify_field', GP4_Action.modify_field, num_args=2)
         
 
     ## Create printable string for Global object

@@ -92,8 +92,8 @@ class Action(AST_object):
                     (self.name, fn_name)
 
             num_fn_args = len(fn)-1
-            if num_fn_args != action.num_args:
-                raise GP4_Exceptions.RuntimeError, 'In action "%s" call to action "%s" has %d args but expected %d.' % \
+            if num_fn_args < action.num_args:
+                raise GP4_Exceptions.RuntimeError, 'In action "%s" call to action "%s" has %d args but expected at least %d.' % \
                     (self.name, fn_name, num_fn_args, action.num_args)
             
 
@@ -147,6 +147,34 @@ def add_to_field(p4, field_ref, fld_or_val):
     new_value = fld.get_value() + value
     print "Set",field_ref,"to 0x%x" % new_value
     fld.set_value(new_value)
+
+
+
+## Built-in Action modify_field
+# @param field : field to be added-to
+# @param value : field or constant to add
+# @param mask  : integer (optional)
+# @returns None
+def modify_field(p4, field_ref, fld_or_val, mask=None):
+    print "   Action modify_field(field=",field_ref,", value=",fld_or_val,
+    if mask != None: print ", mask=0x%x" % mask,")"
+    else: print ")"
+
+    hdr_i = p4.get_header_from_field_ref(field_ref)
+    if not hdr_i: return
+    if not hdr_i.fields_created : return  # hdr invalid
+
+    fld = p4.get_field_from_field_ref(field_ref)
+    if not fld:
+        raise GP4_Exceptions.RuntimeError, "Unknown field : %s" % str(field_ref)
+    
+    value = get_value_of_fld_or_val(p4, fld_or_val)
+    if mask != None:
+        value &= mask
+        value = (fld.get_value() & ~mask) | value
+
+    print "Set",field_ref,"to 0x%x" % value
+    fld.set_value(value)
 
 
 

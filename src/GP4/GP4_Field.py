@@ -36,9 +36,10 @@ class Field(AST_object):
     # @param num_bits : Integer. Number of bits to associate with value. If None: use bit_width
     # @returns None
     def set_value(self, value, num_bits=None):
-        self.value    = value
-        self.is_valid = True
         self.valid_bits = num_bits if num_bits != None else self.bit_width
+        mask = (1<<self.valid_bits)-1  
+        self.value    = value & mask
+        self.is_valid = True
 
 
     ## Return value

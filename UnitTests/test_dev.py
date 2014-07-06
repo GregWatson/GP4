@@ -572,6 +572,142 @@ action add_T1_to_T2_and_T3( a_field, b_field) {
             print "Unexpected SyntaxError:", ex_err.data
 
 
+
+    """ Test actions must use valid action names  -------------------------------"""
+    def test208(self, debug=1):
+
+        program = """
+layout T1_def { fields { type: 8 ; }  }
+layout T2_def { fields { type: 8 ; }  }
+layout T3_def { fields { type: 8 ; }  }
+
+T1_def T1;
+T2_def T2;
+T3_def T3;
+
+parser start  { extract ( T1 ) ;  extract ( T2 ) ;  extract ( T3 ) ;  return P4_PARSING_DONE ; }
+
+control ingress { 
+    apply_table( table1 );
+}
+
+table table1 { 
+    actions { add_T1_to_T2_and_T3 ; } 
+}
+
+action add_T1_to_T2_and_T3( a_field, b_field) { 
+    bad_action_name(T2.type, a_field) ; 
+}
+
+"""
+
+        try:
+            p4, runtime = create_P4_and_runtime(program)
+
+            setup_cmds  = ['table1.set_default_action( add_T1_to_T2_and_T3( T1.type ) )'] 
+            run_cmds( p4, runtime, setup_cmds )
+
+            #                
+            exp_bytes_used = 3
+            pkts = [ [ i+5 for i in range(exp_bytes_used) ] ]
+
+
+            (err, num_bytes_used ) = process_pkts(
+                    p4,
+                    runtime,
+                    pkts,                    # List of packets
+                    init_state='start',      # parser
+                    init_ctrl='ingress',     # control program start
+                    debug=debug)
+
+            self.assert_( False, "Expected test to fail." )
+
+        except GP4.GP4_Exceptions.RuntimeError as err:
+            print "Expected Runtime Error:",err.data
+            self.assert_(True)
+        except GP4.GP4_Exceptions.InternalError as err:
+            print "Unexpected Internal Error:",err.data
+            self.assert_(False)
+        except GP4.GP4_Exceptions.SyntaxError as ex_err:
+            print "Unexpected SyntaxError:", ex_err.data
+
+
+
+
+
+    """ Test modify_field action -------------------------------"""
+    def test209(self, debug=1):
+
+        program = """
+header_type T1_def { fields { type: 8 ; }  }
+layout      T2_def { fields { type: 8 ; }  }
+layout      T3_def { fields { type: 8 ; }  }
+layout      T4_def { fields { type: 8 ; }  }
+
+T1_def T1;
+T2_def T2;
+T3_def T3;
+T4_def T4;
+
+parser start  { extract ( T1 ) ;  extract ( T2 ) ;  extract ( T3 ) ;  return P4_PARSING_DONE ; }
+
+control ingress { 
+    apply_table( table1 );
+}
+
+table table1 { 
+    actions { do_my_action ; } 
+}
+
+action do_my_action() { 
+
+    modify_field(T1.type, 1) ;
+    modify_field(T2.type, 0xff, 0xf0) ; /* set top 4 bits only */
+    modify_field(T3.type, T2.type) ;    /* should be set to ORIGINAL value of T2 i.e. 6 */
+    modify_field(T4.type, 22) ;         /* does nothing - T4 not valid */
+
+}
+
+"""
+
+        try:
+            p4, runtime = create_P4_and_runtime(program)
+
+            setup_cmds  = ['table1.set_default_action( do_my_action() )'] 
+            run_cmds( p4, runtime, setup_cmds )
+
+            #                
+            exp_bytes_used = 3
+            pkts = [ [ i+5 for i in range(exp_bytes_used) ] ]
+
+            (err, num_bytes_used ) = process_pkts(
+                    p4,
+                    runtime,
+                    pkts,                       # List of packets
+                    init_state = 'start',       # parser start state
+                    init_ctrl  = 'ingress',     # control program start
+                    debug=debug )
+
+            self.assert_( err=='', 'Saw err:' + str(err) )
+            self.assert_( num_bytes_used == exp_bytes_used, 
+                      'Expected %d bytes consumed, Saw %d.' % (exp_bytes_used, num_bytes_used ))
+            self.check_field( p4, 'T1.type', 0x1) 
+            self.check_field( p4, 'T2.type', 0xf6) 
+            self.check_field( p4, 'T3.type', 0x7) 
+
+        except GP4.GP4_Exceptions.RuntimeError as err:
+            print "Unexpected Runtime Error:",err.data
+            self.assert_(False)
+        except GP4.GP4_Exceptions.InternalError as err:
+            print "Unexpected Internal Error:",err.data
+            self.assert_(False)
+        except GP4.GP4_Exceptions.SyntaxError as ex_err:
+            print "Unexpected SyntaxError:", ex_err.data
+            self.assert_(False)
+
+
+
+
 ########################################################################################
 if __name__ == '__main__':
     # unittest.main()
@@ -580,7 +716,7 @@ if __name__ == '__main__':
 
     if (True):
         single = unittest.TestSuite()
-        single.addTest( test_dev('test206' ))
+        single.addTest( test_dev('test209' ))
         unittest.TextTestRunner().run(single)
 
     else:
