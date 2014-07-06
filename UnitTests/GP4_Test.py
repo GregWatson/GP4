@@ -136,23 +136,28 @@ def run_cmds( p4, runtime, setup_cmds=[] ):
 # @param init_state : String. Name of initial parser state
 # @param init_ctrl  : String. Name of initial control function. If None then dont execute
 # @param debug      : Integer. Debug flags
-# @return ( err, bytes_used) : (err !=None if error), bytes_used = number of bytes consumed from header.
+# @return ( err, bytes_used, pkts_out) : (err !=None if error), bytes_used = number of bytes consumed from header. pkts_out = [ [ byte ] ]
 def process_pkts(p4, runtime, pkts=[], init_state='start', init_ctrl='', debug=0):
 
     total_bytes_used = 0
+
+    pkts_out = []
 
     for pkt in pkts:
 
         err, bytes_used = runtime.parse_packet(pkt, init_state)
 
         if err:
-            return (err, bytes_used)
+            return (err, bytes_used, pkts_out)
 
-        if init_ctrl: run_control_function( p4, pkt, init_ctrl )
+        if init_ctrl: 
+            run_control_function( p4, pkt, init_ctrl )
+            pkt_out = p4.deparse_packet(pkt, bytes_used)
+            pkts_out.append(pkt_out)
 
         total_bytes_used += bytes_used
 
-    return ('', total_bytes_used )
+    return ('', total_bytes_used, pkts_out )
 
 
 
@@ -210,4 +215,29 @@ class GP4_Test(unittest.TestCase):
         if max_size != None:
             self.assert_( tbl.max_size == max_size, 
             "Table '%s' max_size is %s but expected %s." % (table_name, `tbl.max_size`, `max_size`))
+
                     
+    ## Check that the exp_pkts_out matches actual pkts out
+    # @param self : test
+    # @param exp_pkts_out : [ [ byte ] ] - expected packet sequence
+    # @param pkts_out     : [ [ byte ] ] - actual   packet sequence
+    # @returns None: will assert a failure
+    def check_pkts_out(self, exp_pkts_out, pkts_out):
+        """ Check each byte then check lengths """
+        for ix, exp_pkt in enumerate(exp_pkts_out):
+            if ix < len(pkts_out):  # check it
+                pkt = pkts_out[ix]
+                for bix, byte in enumerate(exp_pkt):
+                    if bix < len(pkt):  # check it
+                        self.assert_( byte == pkt[bix],
+                            "Pkt %d: byte offset %d  expected 0x%x but saw 0x%x" %
+                            (ix, bix, byte, pkt[bix]) )
+                self.assert_(len(exp_pkt) ==  len(pkt), 
+                            "Pkt number %d: expected len %d but saw len %d" %
+                            (ix, len(exp_pkt), len(pkt)) )
+
+        self.assert_(len(exp_pkts_out) == len(pkts_out), 
+                    "Expected to see %d packets coming out but saw %d." % 
+                    (len(exp_pkts_out), len(pkts_out)) )
+
+               

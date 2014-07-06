@@ -25,7 +25,7 @@ class P4(object):
         self.hdr_extraction_order = []  # list of header objects in the order they were extracted.
         self.latest = None  # latest extracted header in a parser function.
         self.modified_fields = []
-
+        self.deparser = None  # default is to put headers back in order they were parsed
 
 
     ## Check self-consistency where possible. More checking is done at run-time.
@@ -338,13 +338,34 @@ class P4(object):
 
         return (err, bits_used/8, '')
 
-    ## Set the specified field in given hdr object to given value
+
+
+    ## Deparse the current packet
+    # @param self : P4 object
+    # @param pkt  : [ byte ]   Ingress pkt.
+    # @param bytes_used : Integer    num bytes of pkt used in parsing.
+    # @returns pkt_out : [ byte ]
+    def deparse_packet(self, pkt, bytes_used):
+        print "deparsing..."
+        if not self.deparser:   # default is to put headers back in order they were parsed
+            pkt_out = []
+            for hdr in self.hdr_extraction_order:
+                pkt_out.extend(hdr.serialize_fields())
+            pkt_out.extend(pkt[bytes_used:])
+        return pkt_out
+
+
+
+
+    ## Set the specified field in given hdr object to given value (immediate assign to value)
     # @param self : P4 object
     # @param hdr  : hdr instance
     # @param field_name : String
     # @param val  : Integer
     # @returns (err, bytes_used, state). return state is just ''
     def set_hdr_field(self, hdr, field_name, val):
+        """ This is a blocking assign. Dont use in actions which need non-blocking assign.
+        """
 
         if not hdr.fields_created: 
             err = hdr.create_fields(self)

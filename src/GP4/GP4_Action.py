@@ -104,11 +104,19 @@ class Action(AST_object):
                 code = "   p4.execute_action_by_name('%s'" % fn[0]
 
                 for ix,arg in enumerate(fn[1:]):
-                    if len(arg) == 1:  # only check to see if its a formal arg if it has length 1
+                    if len(arg) == 1:  # only check to see if it is a formal arg if it has length 1
                         formal = arg[0]
                         if formal in args:
                             code += ", args[%d]" % args.index(formal)
                             continue
+
+                    # if it's an explicit field ref then check it.
+                    if type(arg) is list:
+                        if not p4.is_legal_field_ref(arg):
+                            raise GP4_Exceptions.RuntimeError, \
+                                'In action "%s" field ref "%s" is unknown' % \
+                                (self.name, field_ref_to_string(arg) )
+
                     code += ", %s" % str(arg)
 
                 code += ')'

@@ -2,7 +2,7 @@
 #
 ## @package GP4
 
-from GP4_Utilities  import print_syntax_err
+from GP4_Utilities  import *
 from GP4_AST_object import AST_object
 import GP4_Exceptions
 
@@ -201,12 +201,23 @@ class Header_Instance(AST_object):
         return
 
 
-    ## Compute the length (bits) of all headers already extracted.
+    ## Compute the length (bits) of all fields already extracted.
     # @param self : object
     # @return val : Integer
     def compute_current_bit_length(self):
         return sum([f.valid_bits for f in self.fields])
 
+
+    ## return all valid fields as a packed list of bytes. 
+    # @param self : object
+    # @return bytes : [ Integer ]
+    def serialize_fields(self):
+        bits = Bits([])
+        for f in self.fields:
+            if f.is_valid: bits.add_value(f.value, f.valid_bits)
+        return bits.to_byte_list()
+        
+    
 
     ## Return the name of the declaration for this instance
     # @param self : object

@@ -171,6 +171,35 @@ class Bits(object):
         return new
 
 
+
+    ## Add an integer to a bits object
+    # @param self: Bits object
+    # @param val : integer to be added
+    # @param length : length of val (in bits)
+    # @return None
+    def add_value(self, val, length):
+        if not length: return 
+        num_bits_to_add = 8 - self.bits_left
+        if num_bits_to_add == 0: num_bits_to_add = 8
+        if num_bits_to_add > length: num_bits_to_add = length
+        add_val = val >> (length - num_bits_to_add)  # add from m.s.bits
+        add_val &= (1<<(num_bits_to_add))-1
+
+        if self.bits_left % 8 == 0:
+            self.bytes.append(add_val)
+            self.bits_left = num_bits_to_add
+        else:
+            self.bytes[-1] = (self.bytes[-1] << num_bits_to_add) | add_val
+            self.bits_left += num_bits_to_add
+        self.add_value(val, length - num_bits_to_add)
+        
+    ## Convert Bits object to byte list
+    # @param self: the original Bits object
+    # @return [ byte ]
+    def to_byte_list(self):
+        return self.bytes[:]  # copy
+
+
     ## Extract num_to_get bits from the bytes array and return as integer.
     # @param self: Bits object
     # @param num_to_get : integer
