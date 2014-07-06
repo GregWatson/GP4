@@ -146,7 +146,7 @@ def add_to_field(p4, field_ref, fld_or_val):
     value = get_value_of_fld_or_val(p4, fld_or_val)
     new_value = fld.get_value() + value
     print "Set",field_ref,"to 0x%x" % new_value
-    fld.set_value(new_value)
+    fld.set_non_blocking_value(p4, new_value)
 
 
 
@@ -174,7 +174,7 @@ def modify_field(p4, field_ref, fld_or_val, mask=None):
         value = (fld.get_value() & ~mask) | value
 
     print "Set",field_ref,"to 0x%x" % value
-    fld.set_value(value)
+    fld.set_non_blocking_value(p4, value)
 
 
 

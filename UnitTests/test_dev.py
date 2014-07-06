@@ -693,7 +693,7 @@ action do_my_action() {
                       'Expected %d bytes consumed, Saw %d.' % (exp_bytes_used, num_bytes_used ))
             self.check_field( p4, 'T1.type', 0x1) 
             self.check_field( p4, 'T2.type', 0xf6) 
-            self.check_field( p4, 'T3.type', 0x7) 
+            self.check_field( p4, 'T3.type', 0x6)  
 
         except GP4.GP4_Exceptions.RuntimeError as err:
             print "Unexpected Runtime Error:",err.data

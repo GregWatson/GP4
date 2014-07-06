@@ -112,6 +112,10 @@ class Table(AST_object):
             raise GP4_Exceptions.RuntimeError, "Unknown action '%s'" % action_name
 
         action.execute(p4, *action_args[1:] )
+
+        # execute does a non-blocking update to fields so that the effects occur in         
+        # parallel. Now we need to update the real values ready for the next table.
+        p4.update_modified_fields()
         
         # If we have a next_table defined for this action then we need to execute it.
         next_table_name = self.action_next_table.get(action_name)

@@ -41,6 +41,27 @@ class Field(AST_object):
         self.value    = value & mask
         self.is_valid = True
 
+    ## Assign a value in a non-blocking way - does not change the actual value until p4 update()'s it.
+    # @param self  : object
+    # @param p4    : P4 object
+    # @param value : Integer. New value for this field.
+    # @param num_bits : Integer. Number of bits to associate with value. If None: use bit_width
+    # @returns None
+    def set_non_blocking_value(self, p4, value, num_bits=None):
+        self.valid_bits = num_bits if num_bits != None else self.bit_width
+        mask = (1<<self.valid_bits)-1  
+        self.non_blocking_value  = value & mask
+        self.is_valid = True
+        p4.add_modified_field(self)
+
+
+    ## Update the field's value from its non-blocking value.
+    # @param self  : object
+    # @returns None
+    def update_value(self):
+        self.value    = self.non_blocking_value
+        self.is_valid = True
+
 
     ## Return value
     # @param self  : object

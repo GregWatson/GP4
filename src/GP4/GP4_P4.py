@@ -24,6 +24,8 @@ class P4(object):
         # run time fields per processed packet 
         self.hdr_extraction_order = []  # list of header objects in the order they were extracted.
         self.latest = None  # latest extracted header in a parser function.
+        self.modified_fields = []
+
 
 
     ## Check self-consistency where possible. More checking is done at run-time.
@@ -301,7 +303,7 @@ class P4(object):
         self.hdr_extraction_order = []
         self.latest = None
         for hdr in self.header_insts.keys(): self.header_insts[hdr].initialize()
-
+        self.modified_fields = []
 
     ## Extracts the fields for the specified header from the given Bits object
     # @param self : P4 object
@@ -432,6 +434,29 @@ class P4(object):
         hdr_i = self.get_hdr_inst(hdr_name, hdr_index, raiseError=False)
         if hdr_i: return hdr_i
         else: return None
+
+
+
+
+    ## Add the given field to the list of fields that have been changed via non-blocking assigns
+    # @param self    : P4 object
+    # @param field   : field object
+    # @returns None
+    def add_modified_field(self, field):
+        self.modified_fields.append(field)
+
+
+    ## Update all the actual header fields that were modified by the last table action.
+    # @param self    : P4 object
+    # @returns None
+    def update_modified_fields(self):
+        print "update_modified_fields:", self.modified_fields
+        for f in self.modified_fields:
+            f.update_value()
+
+        self.modified_fields = []
+
+
 
 
 
