@@ -3,7 +3,7 @@
 ## @package GP4
 
 import GP4_Exceptions
-import sys
+import re, sys
 
 
 ## COnvert string to integer. String may be hex (startswith 0x)
@@ -69,21 +69,28 @@ def field_ref_to_string(field_ref):
     return  hdr_ref_to_string(field_ref[0]) + "." + field_ref[1]
 
 
-
-## Given list of strings or lists of strings, etc., flatten it to a string.
-# @param expr : list of strings or more lists of strings
-# @returns String
-def flatten_list_of_strings( expr):
-    if type(expr) == type('s'): 
-        return expr
+## Given a field_ref as a string, return  ( hdr_name, hdr_index ,field_name )
+# @param field_ref : string e.g. 'hdr.field' or 'hdr2[3].field'
+# @returns ( hdr_name, hdr_index ,field_name ) hdr_index='' if none
+def get_hdr_hdr_index_field_name_from_string(field_ref):
+    # extract index, if any
+    tmatch = re.match( r'([a-zA-Z0-9_]+)\[([a-zA-Z0-9_]+)\]\.([a-zA-Z0-9_]+)', field_ref)
+    if tmatch:
+        hdr_name   = tmatch.group(1)
+        hdr_index  = int(tmatch.group(2))
+        field_name = tmatch.group(3)
     else:
-        if len(expr)==1: 
-            return flatten_list_of_strings(expr[0])
-        code = '('
-        for el in expr: 
-            code += ' ' + flatten_list_of_strings(el)
-        return code + ' )'
+        tmatch = re.match( r'([a-zA-Z0-9_]+)\.([a-zA-Z0-9_]+)', field_ref)
+        if tmatch:
+            hdr_name   = tmatch.group(1)
+            hdr_index  = ''
+            field_name = tmatch.group(2)
+        else:
+            print "check_field: unable to parse field_ref:", field_ref
+            sys.exit(1)
+    return ( hdr_name, hdr_index ,field_name )
 
+      
 ## Given a pyparsing field_ref object, return hdr_name, hdr_index and field_name
 # @param field_ref : pyparsing field_ref object
 # @returns ( hdr_name, hdr_index ,field_name ) hdr_index='' if none
@@ -98,6 +105,20 @@ def get_hdr_hdr_index_field_name_from_field_ref(field_ref):
     hdr_index  = '' if len(hdr_ref)==1 else hdr_ref[1]
     return ( hdr_name, hdr_index ,field_name )
 
+
+## Given list of strings or lists of strings, etc., flatten it to a string.
+# @param expr : list of strings or more lists of strings
+# @returns String
+def flatten_list_of_strings( expr):
+    if type(expr) == type('s'): 
+        return expr
+    else:
+        if len(expr)==1: 
+            return flatten_list_of_strings(expr[0])
+        code = '('
+        for el in expr: 
+            code += ' ' + flatten_list_of_strings(el)
+        return code + ' )'
 
 
 ## Convert a list of python stmts into a string and then exec it.

@@ -4,12 +4,13 @@
 #
 ##################################################
 
-import sys, unittest, re
+import sys, unittest
 sys.path.append("/home/gwatson/Work/GP4/src")
 try:
     from GP4.GP4_CompilerHelp  import compile_string
     from GP4.GP4_Runtime       import Runtime
     from GP4.GP4_Execute       import run_control_function
+    from GP4.GP4_Utilities     import *
 
     import GP4.GP4_Exceptions
 except ImportError, err:
@@ -166,24 +167,18 @@ class GP4_Test(unittest.TestCase):
     # @param self : test
     # @param p4   : p4 object
     # @param field_ref : String.  e.g. 'L2_hdr.DA' or 'vlan[3].my_field'
-    # @param val : Integer: expected value
+    # @param val : Integer: expected value or "invalid"
     # @returns None: will assert a failure
     def check_field(self, p4, field_ref, val):
         # extract index, if any
-        tmatch = re.match( r'([a-zA-Z0-9_]+)\[([a-zA-Z0-9_]+)\]\.([a-zA-Z0-9_]+)', field_ref)
-        if tmatch:
-            hdr_name   = tmatch.group(1)
-            hdr_index  = int(tmatch.group(2))
-            field_name = tmatch.group(3)
-        else:
-            tmatch = re.match( r'([a-zA-Z0-9_]+)\.([a-zA-Z0-9_]+)', field_ref)
-            if tmatch:
-                hdr_name   = tmatch.group(1)
-                hdr_index  = ''
-                field_name = tmatch.group(2)
-            else:
-                print "check_field: unable to parse field_ref:", field_ref
-                sys.exit(1)
+        hdr_name, hdr_index ,field_name = get_hdr_hdr_index_field_name_from_string(field_ref)
+
+        if val == 'invalid':
+            self.assert_(not p4.check_hdr_inst_is_valid(hdr_name, hdr_index),
+                         "Expected hdr '%s' to be invalid, but was valid." % hdr_name)
+            return
+            
+
         # Now get the actual header object from P4.
         hdr_i = p4.get_or_create_hdr_inst(hdr_name, hdr_index)
         self.assert_( hdr_i,"Unable to find header from field ref:" + field_ref)

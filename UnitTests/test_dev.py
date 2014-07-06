@@ -694,6 +694,7 @@ action do_my_action() {
             self.check_field( p4, 'T1.type', 0x1) 
             self.check_field( p4, 'T2.type', 0xf6) 
             self.check_field( p4, 'T3.type', 0x6)  
+            self.check_field( p4, 'T4.type', 'invalid')  
 
         except GP4.GP4_Exceptions.RuntimeError as err:
             print "Unexpected Runtime Error:",err.data
