@@ -110,12 +110,13 @@ class Action(AST_object):
                             code += ", args[%d]" % args.index(formal)
                             continue
 
-                    # if it's an explicit field ref then check it.
+                    # if it's an explicit hdr- or field-ref then check it.
                     if type(arg) is list:
                         if not p4.is_legal_field_ref(arg):
-                            raise GP4_Exceptions.RuntimeError, \
-                                'In action "%s" field ref "%s" is unknown' % \
-                                (self.name, field_ref_to_string(arg) )
+                            if not p4.hdr_inst_defined(arg[0]):
+                                raise GP4_Exceptions.RuntimeError, \
+                                    'In action "%s" field ref "%s" is unknown' % \
+                                    (self.name, str(arg) )
 
                     code += ", %s" % str(arg)
 
@@ -142,8 +143,8 @@ def no_action(p4):
 
 
 ## Built-in Action add_to_field
-# @param field : field to be added-to
-# @param value : field or constant to add
+# @param field_ref  : field to be added-to
+# @param fld_or_val : field or constant to add
 # @returns None
 def add_to_field(p4, field_ref, fld_or_val):
     print "   Action add_to_field(field=",field_ref,", value=",fld_or_val,")"
@@ -159,8 +160,8 @@ def add_to_field(p4, field_ref, fld_or_val):
 
 
 ## Built-in Action modify_field
-# @param field : field to be added-to
-# @param value : field or constant to add
+# @param field_ref  : field to be added-to
+# @param fld_or_val : field or constant to add
 # @param mask  : integer (optional)
 # @returns None
 def modify_field(p4, field_ref, fld_or_val, mask=None):
@@ -184,6 +185,21 @@ def modify_field(p4, field_ref, fld_or_val, mask=None):
     print "Set",field_ref,"to 0x%x" % value
     fld.set_non_blocking_value(p4, value)
 
+
+
+## Built-in Action to add a header
+# @param hdr_ref : hdr to be created (if not already exists)
+# @returns None
+def add_header(p4, hdr_ref):
+    print "add_header:",hdr_ref
+    hdr = p4.get_header_from_header_ref(hdr_ref)
+    if not hdr:
+        raise GP4_Exceptions.RuntimeError, "Tried to create hdr %s but it is unknown." % hdr_ref_to_string(hdr_ref)
+    if hdr.fields_created : return
+
+    hdr.create_fields(p4)
+    
+    
 
 
 #######################

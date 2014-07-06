@@ -91,6 +91,14 @@ def get_hdr_hdr_index_field_name_from_string(field_ref):
     return ( hdr_name, hdr_index ,field_name )
 
       
+## Given a pyparsing object, return true if it looks like a field_ref
+# @param ref : pyparsing ref object
+# @returns Bool
+def is_field_ref(ref):
+    if len(ref) != 2 : return False
+    return type(ref[0]) is list
+
+
 ## Given a pyparsing field_ref object, return hdr_name, hdr_index and field_name
 # @param field_ref : pyparsing field_ref object
 # @returns ( hdr_name, hdr_index ,field_name ) hdr_index='' if none
@@ -104,6 +112,19 @@ def get_hdr_hdr_index_field_name_from_field_ref(field_ref):
     hdr_name   = hdr_ref[0]
     hdr_index  = '' if len(hdr_ref)==1 else hdr_ref[1]
     return ( hdr_name, hdr_index ,field_name )
+
+
+## Given a pyparsing header_ref object, return hdr_name and hdr_index (or '')
+# @param hdr_ref : pyparsing header_ref object
+# @returns ( hdr_name, hdr_index ) hdr_index='' if none
+def get_hdr_hdr_index_from_hdr_ref(hdr_ref):
+    """ hdr_ref is like:   ['L3_hdr']
+                       or: ['L3_simple', '1']
+    """
+    assert len(hdr_ref), "Expected hdr-ref object of length 1 or 2. saw %s" % `hdr_ref`
+    hdr_name   = hdr_ref[0]
+    hdr_index  = '' if len(hdr_ref)==1 else hdr_ref[1]
+    return ( hdr_name, hdr_index )
 
 
 ## Given list of strings or lists of strings, etc., flatten it to a string.

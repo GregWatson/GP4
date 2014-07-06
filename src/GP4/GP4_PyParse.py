@@ -284,6 +284,20 @@ def new_GP4_parser() :
 
     action_function.setParseAction( do_action_function )
 
+    # --- Deparser definition ---------------------------------
+
+    deparse_name = Word(alphas,alphanums+'_')
+
+    header_field_ref = ( header_ref | field_ref ) + SEMICOLON
+
+    deparse_instance = Group(  Suppress(Keyword('deparse')) 
+                             + deparse_name 
+                             + LBRACE
+                                + OneOrMore(header_field_ref)
+                             + RBRACE )
+
+    deparse_instance.setParseAction( do_deparse_instance )
+
     # --- P4 definition ------------------------------------
 
     p4_declaration = (   action_function
@@ -292,6 +306,7 @@ def new_GP4_parser() :
                        | parser_function 
                        | table_declaration 
                        | control_function
+                       | deparse_instance
                      )
 
     parser = OneOrMore(p4_declaration)

@@ -10,6 +10,7 @@ import GP4_Parser_Function
 import GP4_Control_Function
 import GP4_Table
 import GP4_Action
+import GP4_Deparser
 import GP4_Exceptions
 
 from GP4_Utilities import *
@@ -269,6 +270,28 @@ def do_action_function(string, loc, toks):
     print "     action_name=",action_name," args=",action_args," rest=",action[1:]
     return [ GP4_Action.Action( 
                 string, loc, name=action_name, func_args=action_args, func_body=action[1:]
+            ) ]
+
+
+                
+## construct a Deparse_Instance object
+# @param string : String.  Source text
+# @param loc    : Integer. location in text of this object
+# @param toks   : Tokens.  List of tokens representing this object.
+# @return new token containing the constructed object.
+def do_deparse_instance(string, loc, toks):
+    print "deparse_instance:", toks
+    
+    my_toks = toks.asList()
+    #assert len(my_toks)==1
+    deparser      = my_toks[0]
+    #assert len(deparser)>1
+    deparser_name = deparser[0]
+    deparser_hdrs = deparser[1:]
+    print "     deparser_name=", deparser_name,"  hdrs/fields=",deparser_hdrs
+
+    return [ GP4_Deparser.Deparser( 
+                string, loc, name=deparser_name, refs = deparser_hdrs
             ) ]
                 
 

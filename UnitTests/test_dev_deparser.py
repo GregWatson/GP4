@@ -22,17 +22,24 @@ from GP4_Test import simple_test, parse_and_run_test, setup_tables_parse_and_run
     
 class test_dev(GP4_Test):
 
-    """ Test add header action -----------------------------"""
+    """ Test deparser for long words and weird bit offsets -----------------------------"""
     def test301(self, debug=1):
 
         program = """
-layout h1 { fields { b8 : 8   ; } }
-layout h2 { fields { b16 : 16 ; } }
-layout h3 { fields { b24 : 24 ; } }
+layout vlan_tagish {
+    fields {
+        pcp : 3 ;
+        vid : 12;
+        da  : 48 ;
+        sa  : 48 ;
+        t18 : 18; 
+        vid2 : 15;
+    }
+}
 
-h1 H1; h2 H2; h3 H3;
+vlan_tagish V1;
 
-parser start  { extract ( H1 ) ; extract ( H3) ; return P4_PARSING_DONE ; }
+parser start  { extract ( V1 ) ; return P4_PARSING_DONE ; }
 
 control ingress { 
     apply_table( table1 );
@@ -43,11 +50,14 @@ table table1 {
 }
 
 action do_my_action() { 
-    add_header( H2 );
-    modify_field( H2.b16, 0x1234);
-}
 
-deparse add_h2_in_middle { H1; H2; H3; }
+    add_to_field(V1.pcp, 0x4) ;
+    add_to_field(V1.vid, 0xf00) ;
+    add_to_field(V1.t18, 0x10000) ;
+    add_to_field(V1.vid2, 0x2000) ;
+    modify_field(V1.da, V1.sa);
+    modify_field(V1.sa, V1.da);
+}
 
 """
 
@@ -58,9 +68,9 @@ deparse add_h2_in_middle { H1; H2; H3; }
             run_cmds( p4, runtime, setup_cmds )
 
             #                
-            pkts = [ [ i for i in range(10) ], [5,6,7,8,9 ] ]
-            exp_pkts_out = [ [0, 0x12, 0x34, 1,2,3,4,5,6,7,8,9 ], [5,0x12, 0x34,6,7,8,9] ]
-            exp_bytes_used = 8
+            pkts = [ [ i for i in range(20) ] ]
+            exp_pkts_out = [ [0x9e, 1,8,9,0xa, 0xb, 0xc, 0xd, 2,3,4,5,6,7, 0x8e, 0xf, 0x30, 17,18,19 ] ]
+            exp_bytes_used = 18
 
             (err, num_bytes_used, pkts_out ) = process_pkts(
                     p4,
@@ -73,9 +83,12 @@ deparse add_h2_in_middle { H1; H2; H3; }
             self.assert_( err=='', 'Saw err:' + str(err) )
             self.assert_( num_bytes_used == exp_bytes_used, 
                       'Expected %d bytes consumed, Saw %d.' % (exp_bytes_used, num_bytes_used ))
-            self.check_field( p4, 'H1.b8', 5) 
-            self.check_field( p4, 'H2.b16', 0x1234) 
-            self.check_field( p4, 'H3.b24', 0x60708) 
+            self.check_field( p4, 'V1.pcp', 0x4) 
+            self.check_field( p4, 'V1.vid', 0xf00) 
+            self.check_field( p4, 'V1.da', 0x840485058606) 
+            self.check_field( p4, 'V1.sa', 0x810182028303) 
+            self.check_field( p4, 'V1.vid2', 0x3011) 
+            self.check_field( p4, 'V1.t18', 0x31c1e) 
             self.check_pkts_out(exp_pkts_out, pkts_out)
 
         except GP4.GP4_Exceptions.RuntimeError as err:

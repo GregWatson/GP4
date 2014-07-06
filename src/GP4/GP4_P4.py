@@ -2,7 +2,7 @@
 #
 ## @package GP4
 
-from GP4_Utilities import print_syntax_err, get_integer, get_hdr_hdr_index_field_name_from_field_ref
+from GP4_Utilities import *
 import GP4_Exceptions
 import GP4_Action
 import sys
@@ -18,14 +18,14 @@ class P4(object):
         self.header_insts = {} # maps inst name of header_inst to header_inst or header_stack object
         self.parser_functions = {}  # maps parser function name (string) to parse function object
         self.control_functions = {} # maps control function name (string) to control function object
-        self.tables  = {} # maps table name to table object
-        self.actions = {} # maps action name to action object
+        self.tables  = {}  # maps table name to table object
+        self.actions = {}  # maps action name to action object
+        self.deparsers = {} # maps deparser name to deparser object
 
         # run time fields per processed packet 
         self.hdr_extraction_order = []  # list of header objects in the order they were extracted.
         self.latest = None  # latest extracted header in a parser function.
         self.modified_fields = []
-        self.deparser = None  # default is to put headers back in order they were parsed
 
 
     ## Check self-consistency where possible. More checking is done at run-time.
@@ -104,6 +104,13 @@ class P4(object):
 
             self.actions[ast_obj.name] = ast_obj 
 
+        elif ( obj_typ == 'deparser'):
+            if ast_obj.name in self.deparsers:
+                print_syntax_err('Deparser "%s" already defined.' % ast_obj.name,
+                                 ast_obj.string, ast_obj.loc)
+
+            self.deparsers[ast_obj.name] = ast_obj 
+
         else:
             print "Internal Error: P4:add_AST_obj  Unknown AST_obj", ast_obj.typ
             sys.exit(1)
@@ -146,6 +153,16 @@ class P4(object):
     # @return action object or None
     def get_action_by_name(self, action_name):
         return self.actions.get(action_name)
+
+
+
+    ## Finds the named deparser and returns the corresponding object or None
+    # @param self : P4 object
+    # @param deparser_name : name of the deparser
+    # @return deparser object or None
+    def get_deparser_by_name(self, deparser_name):
+        return self.deparsers.get(deparser_name)
+
 
     ## Finds the named action and then executes it with the given arguments.
     # @param self : P4 object
@@ -271,7 +288,7 @@ class P4(object):
     # @param field_ref : PyParsing field_ref object
     # @returns Bool
     def is_legal_field_ref(self, field_ref):
-        assert len(field_ref)==2 # hdr ref, field name
+        if not len(field_ref)==2: return False
         hdr_ref    = field_ref[0]  # list
         field_name = field_ref[1]  # string
 
@@ -347,11 +364,25 @@ class P4(object):
     # @returns pkt_out : [ byte ]
     def deparse_packet(self, pkt, bytes_used):
         print "deparsing..."
-        if not self.deparser:   # default is to put headers back in order they were parsed
-            pkt_out = []
+        pkt_out = []
+
+        if not len(self.deparsers):   # default is to put headers back in order they were parsed
             for hdr in self.hdr_extraction_order:
                 pkt_out.extend(hdr.serialize_fields())
-            pkt_out.extend(pkt[bytes_used:])
+
+        else:
+            assert len(self.deparsers)==1,"Sorry, can only have one deparser at the moment!"
+            dprsr_names = self.deparsers.keys()
+            dprsr_name  = dprsr_names[0]
+            dprsr       = self.get_deparser_by_name(dprsr_name)
+            print "Deparsing packet using: ",dprsr
+            for hdr_or_field_ref in dprsr.refs:
+                hdr_or_field = self.get_hdr_or_field_from_ref(hdr_or_field_ref)
+                if not hdr_or_field or not hdr_or_field.fields_created:
+                    continue  # skip any invalid headers
+                pkt_out.extend(hdr_or_field.serialize_fields())
+
+        pkt_out.extend(pkt[bytes_used:])
         return pkt_out
 
 
@@ -437,6 +468,18 @@ class P4(object):
         if hdr_i: return hdr_i.get_field(field_name)
         else: return None
 
+
+    ## Get either field object or header object from ref object (field_ref or hdr_ref)
+    # @param self : P4 object
+    # @param ref  : PyParse field_ref or hdr_ref
+    # @returns object else None
+    def get_hdr_or_field_from_ref(self, ref):
+
+        if is_field_ref(ref): return  self.get_field_from_field_ref(ref)
+        else: return  self.get_header_from_header_ref(ref)
+
+ 
+
     ## Get field object from field_ref object
     # @param self    : P4 object
     # @param field_ref : PyParse field_ref list
@@ -446,12 +489,24 @@ class P4(object):
         hdr_name, hdr_index ,field_name = get_hdr_hdr_index_field_name_from_field_ref(field_ref)
         return self.get_field(hdr_name, hdr_index ,field_name)
 
+
     ## Get header instance object from field_ref object
     # @param self    : P4 object
     # @param field_ref : PyParse field_ref list
     # @returns header Instance object else None
     def get_header_from_field_ref(self, field_ref):
         hdr_name, hdr_index ,field_name = get_hdr_hdr_index_field_name_from_field_ref(field_ref)
+        hdr_i = self.get_hdr_inst(hdr_name, hdr_index, raiseError=False)
+        if hdr_i: return hdr_i
+        else: return None
+
+
+    ## Get header instance object from hdr_ref object
+    # @param self    : P4 object
+    # @param hdr_ref : PyParse hdr_ref list
+    # @returns header Instance object else None
+    def get_header_from_header_ref(self, hdr_ref):
+        hdr_name, hdr_index = get_hdr_hdr_index_from_hdr_ref(hdr_ref)
         hdr_i = self.get_hdr_inst(hdr_name, hdr_index, raiseError=False)
         if hdr_i: return hdr_i
         else: return None
@@ -491,6 +546,8 @@ class P4(object):
             GP4_Action.Action('', 0, 'add_to_field', GP4_Action.add_to_field, num_args=2)
         self.actions['modify_field'] = \
             GP4_Action.Action('', 0, 'modify_field', GP4_Action.modify_field, num_args=2)
+        self.actions['add_header'] = \
+            GP4_Action.Action('', 0, 'add_header', GP4_Action.add_header, num_args=1)
         
 
     ## Create printable string for Global object
