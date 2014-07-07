@@ -30,17 +30,45 @@ class Header_Instance(AST_object):
         self.field_names    = []      # ordered list of field names (Strings)
         self.compute_length = None    # Function to compute length of header. Built at run time.
 
+        self.non_blocking_invalidate = False  # Set to true if header is marked as invalid
+        self.non_blocking_new_fields = []     # gets set when copying hdr to self
+
+
+    ## Update non-blocking changes to this header (at end of actions)
+    # @param self : object
+    # @returns None
+    def update_value(self):
+
+        if self.non_blocking_invalidate:
+            self.non_blocking_invalidate = False
+            self.invalidate_fields()
+            print self.hdr_inst_name," - marked as invalid"
+
+        if len(self.non_blocking_new_fields):
+            self.fields_created = True
+            self.fields         = self.non_blocking_new_fields
+            self.field_names    = [ f.name for f in self.fields ]
+            self.non_blocking_new_fields = []
+
 
     ## Make the instance fields invalid (created, but not assigned fields)
     # @param self : object
     # @returns None
-    def non_blocking_invalidate_fields(self): 
-
-        This needs to be fixed for non-blocking changes to a header.
+    def invalidate_fields(self): 
 
         self.fields_created = False
         self.fields = []
         self.field_names = []
+
+
+    ## Mark this hdr to be invalidated at end of current actions
+    # @param self : object
+    # @param   p4 : p4 object
+    # @returns None
+    def set_non_blocking_invalidate(self, p4): 
+        
+        self.non_blocking_invalidate = True
+        p4.add_modified_field(self)
 
 
     ## Instantiate the actual fields from the header_decl

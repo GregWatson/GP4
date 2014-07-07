@@ -209,19 +209,22 @@ def copy_header(p4, dst_ref, src_ref):
 
     src_hdr = p4.get_header_from_header_ref(src_ref)
     if not src_hdr:
-        raise GP4_Exceptions.RuntimeError, "copy_header: unknown source header '%s'." % hdr_ref_to_string(src_ref)
+        raise GP4_Exceptions.RuntimeError, \
+                "copy_header: unknown source header '%s'." % hdr_ref_to_string(src_ref)
 
     dst_hdr = p4.get_header_from_header_ref(dst_ref)
     if not dst_hdr:
-        raise GP4_Exceptions.RuntimeError, "copy_header: unknown destination header '%s'." % hdr_ref_to_string(dst_ref)
+        raise GP4_Exceptions.RuntimeError, \
+                "copy_header: unknown destination header '%s'." % hdr_ref_to_string(dst_ref)
 
     if src_hdr.fields_created == False:  # set dst to same
-        dst_hdr.non_blocking_invalidate_fields()
+        dst_hdr.set_non_blocking_invalidate(p4)
+        print "marking hdr",dst_hdr.hdr_inst_name,"as invalid at end of actions."
         return
 
-    Greg, need to do non-blocking copy of src fields to dst hdr.
-
-    
+    # src has valid fields. Copy them over as non_blocking.
+    dst_hdr.non_blocking_new_fields = [ f.copy() for f in src_hdr.fields ]
+    p4.add_modified_field(dst_hdr)
 
 
 #######################

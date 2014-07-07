@@ -1,3 +1,4 @@
+Check that hdrs and fields are updated correctly across multiple table activations.
 
 Implement the std action set.
 

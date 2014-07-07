@@ -24,11 +24,12 @@ class Field(AST_object):
         self.bit_width = fld_width  # Integer.  0 means variable length ('*')
         self.modifiers = fld_mods   # [ String ] : 'saturating', 'signed'
 
-        # following used by field instances.
+        # following are used by field instances.
         self.is_valid = False  
         self.value    = None   # Integer
         self.valid_bits = 0    # number of bits when is_valid
 
+        self.non_blocking_value = None  # used for non-blocking assigns
 
     ## Make a copy of self
     # @param self  : object
@@ -61,8 +62,7 @@ class Field(AST_object):
     def set_non_blocking_value(self, p4, value, num_bits=None):
         self.valid_bits = num_bits if num_bits != None else self.bit_width
         mask = (1<<self.valid_bits)-1  
-        self.non_blocking_value  = value & mask
-        self.is_valid = True
+        self.non_blocking_value  = value & mask if value != None else None
         p4.add_modified_field(self)
 
 
@@ -70,8 +70,8 @@ class Field(AST_object):
     # @param self  : object
     # @returns None
     def update_value(self):
-        self.value    = self.non_blocking_value
-        self.is_valid = True
+        self.value    = self.non_blocking_value   # could be None
+        self.is_valid = self.value != None
 
 
     ## Return value

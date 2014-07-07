@@ -25,7 +25,7 @@ class P4(object):
         # run time fields per processed packet 
         self.hdr_extraction_order = []  # list of header objects in the order they were extracted.
         self.latest = None  # latest extracted header in a parser function.
-        self.modified_fields = []
+        self.modified_fields = []  # list of fields or headers that are modified by actions.
 
 
     ## Check self-consistency where possible. More checking is done at run-time.
@@ -514,7 +514,7 @@ class P4(object):
 
 
 
-    ## Add the given field to the list of fields that have been changed via non-blocking assigns
+    ## Add the given field or hdr to the list that have been changed via non-blocking assigns.
     # @param self    : P4 object
     # @param field   : field object
     # @returns None

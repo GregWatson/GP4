@@ -90,6 +90,20 @@ def get_hdr_hdr_index_field_name_from_string(field_ref):
             sys.exit(1)
     return ( hdr_name, hdr_index ,field_name )
 
+## Given a hdr_ref as a string, return  ( hdr_name, hdr_index )
+# @param hdr_ref : string e.g. 'hdr' or 'hdr2[3]'
+# @returns ( hdr_name, hdr_index ) hdr_index='' if none
+def get_hdr_hdr_index_from_string(hdr_ref):
+    # extract index, if any
+    tmatch = re.match( r'([a-zA-Z0-9_]+)\[([a-zA-Z0-9_]+)\]', hdr_ref)
+    if tmatch:
+        hdr_name   = tmatch.group(1)
+        hdr_index  = int(tmatch.group(2))
+    else:
+        hdr_name   = hdr_ref  # simple string
+        hdr_index  = ''
+    return ( hdr_name, hdr_index )
+
       
 ## Given a pyparsing object, return true if it looks like a field_ref
 # @param ref : pyparsing ref object

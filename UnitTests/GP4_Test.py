@@ -198,6 +198,27 @@ class GP4_Test(unittest.TestCase):
                         ( field_ref, val, act_val ) )
 
 
+    ## Check that the specified header has the specified value.
+    # @param self : test
+    # @param p4   : p4 object
+    # @param hdr_ref : String.  e.g. 'L2_hdr' or 'vlan[3]'
+    # @param val : "invalid"
+    # @returns None: will assert a failure
+    def check_header(self, p4, hdr_ref, val):
+        # extract index, if any
+        hdr_name, hdr_index = get_hdr_hdr_index_from_string(hdr_ref)
+
+        if val == 'invalid':
+            self.assert_(not p4.check_hdr_inst_is_valid(hdr_name, hdr_index),
+                         "Expected hdr '%s' to be invalid, but was valid." % hdr_name)
+            return
+
+        # dont know how to process any val other than 'invalid'
+        self.assert_( False, 
+                "check_header: given val of %s but dont know how to check that against a hdr." %
+                str(val) )
+
+
     ## Check that the specified table has the specified props
     # @param self : test
     # @param p4   : p4 object
