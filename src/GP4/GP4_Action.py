@@ -200,6 +200,28 @@ def add_header(p4, hdr_ref):
     hdr.create_fields(p4)
     
     
+## Built-in Action to copy a header
+# @param dst_ref : target (destination) hdr 
+# @param src_ref : source hdr 
+# @returns None
+def copy_header(p4, dst_ref, src_ref):
+    print "copy_header:",src_ref,"to",dst_ref
+
+    src_hdr = p4.get_header_from_header_ref(src_ref)
+    if not src_hdr:
+        raise GP4_Exceptions.RuntimeError, "copy_header: unknown source header '%s'." % hdr_ref_to_string(src_ref)
+
+    dst_hdr = p4.get_header_from_header_ref(dst_ref)
+    if not dst_hdr:
+        raise GP4_Exceptions.RuntimeError, "copy_header: unknown destination header '%s'." % hdr_ref_to_string(dst_ref)
+
+    if src_hdr.fields_created == False:  # set dst to same
+        dst_hdr.non_blocking_invalidate_fields()
+        return
+
+    Greg, need to do non-blocking copy of src fields to dst hdr.
+
+    
 
 
 #######################

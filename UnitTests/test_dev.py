@@ -91,6 +91,75 @@ deparse add_h2_in_middle { H1; H2; H3; }
 
 
 
+    """ Test copy header action -----------------------------"""
+    def test302(self, debug=1):
+
+        program = """
+layout h1 { fields { b8 : 8   ; } }
+
+h1 H1; h1 H2; h1 H3;
+
+parser start  { extract ( H1 ) ; extract ( H2 ); return P4_PARSING_DONE ; }
+
+control ingress { 
+    apply_table( table1 );
+}
+
+table table1 { 
+    actions { do_my_action ; } 
+}
+
+action do_my_action() { 
+    add_header( H3 );
+    modify_field( H1.b8, 0xff);
+    copy_header( H2, H1);
+    copy_header( H3, H2);
+}
+
+deparse add_h2_in_middle { H1; H2; H3; }
+
+"""
+
+        try:
+            p4, runtime = create_P4_and_runtime(program)
+
+            setup_cmds  = ['table1.set_default_action( do_my_action() )'] 
+            run_cmds( p4, runtime, setup_cmds )
+
+            #                
+            pkts = [ [ i+5 for i in range(6) ] ]
+            exp_pkts_out = [ [0xff, 5, 6, 7,8,9,10 ] ]
+            exp_bytes_used = 2
+
+            (err, num_bytes_used, pkts_out ) = process_pkts(
+                    p4,
+                    runtime,
+                    pkts,                       # List of packets
+                    init_state = 'start',       # parser start state
+                    init_ctrl  = 'ingress',     # control program start
+                    debug=debug )
+
+            self.assert_( err=='', 'Saw err:' + str(err) )
+            self.assert_( num_bytes_used == exp_bytes_used, 
+                      'Expected %d bytes consumed, Saw %d.' % (exp_bytes_used, num_bytes_used ))
+            self.check_field( p4, 'H1.b8', 0xff) 
+            self.check_field( p4, 'H2.b8', 0x5) 
+            self.check_field( p4, 'H3.b8', 0x6) 
+            self.check_pkts_out(exp_pkts_out, pkts_out)
+
+        except GP4.GP4_Exceptions.RuntimeError as err:
+            print "Unexpected Runtime Error:",err.data
+            self.assert_(False)
+        except GP4.GP4_Exceptions.InternalError as err:
+            print "Unexpected Internal Error:",err.data
+            self.assert_(False)
+        except GP4.GP4_Exceptions.SyntaxError as ex_err:
+            print "Unexpected SyntaxError:", ex_err.data
+            self.assert_(False)
+
+
+
+
 ########################################################################################
 if __name__ == '__main__':
     # unittest.main()
@@ -99,7 +168,7 @@ if __name__ == '__main__':
 
     if (True):
         single = unittest.TestSuite()
-        single.addTest( test_dev('test301' ))
+        single.addTest( test_dev('test302' ))
         unittest.TextTestRunner().run(single)
 
     else:

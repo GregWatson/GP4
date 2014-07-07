@@ -31,6 +31,18 @@ class Header_Instance(AST_object):
         self.compute_length = None    # Function to compute length of header. Built at run time.
 
 
+    ## Make the instance fields invalid (created, but not assigned fields)
+    # @param self : object
+    # @returns None
+    def non_blocking_invalidate_fields(self): 
+
+        This needs to be fixed for non-blocking changes to a header.
+
+        self.fields_created = False
+        self.fields = []
+        self.field_names = []
+
+
     ## Instantiate the actual fields from the header_decl
     # @param self : object
     # @returns err String: '' is no error

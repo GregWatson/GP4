@@ -30,6 +30,17 @@ class Field(AST_object):
         self.valid_bits = 0    # number of bits when is_valid
 
 
+    ## Make a copy of self
+    # @param self  : object
+    # @returns New Field object
+    def copy(self):
+        new = Field(self.string, self.loc, self.name, self.bit_width, self.modifiers)
+        new.is_valid   = self.is_valid
+        new.value      = self.value
+        new.valid_bits = self.valid_bits
+        return new
+
+
     ## Assign a value
     # @param self  : object
     # @param value : Integer. New value for this field.

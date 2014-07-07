@@ -548,6 +548,8 @@ class P4(object):
             GP4_Action.Action('', 0, 'modify_field', GP4_Action.modify_field, num_args=2)
         self.actions['add_header'] = \
             GP4_Action.Action('', 0, 'add_header', GP4_Action.add_header, num_args=1)
+        self.actions['copy_header'] = \
+            GP4_Action.Action('', 0, 'copy_header', GP4_Action.copy_header, num_args=2)
         
 
     ## Create printable string for Global object
