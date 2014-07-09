@@ -198,6 +198,24 @@ def add_header(p4, hdr_ref):
     if hdr.fields_created : return
 
     hdr.create_fields(p4)
+
+
+    
+## Built-in Action to remove a header
+# @param hdr_ref : hdr to be removed
+# @returns None
+def remove_header(p4, hdr_ref):
+    """The indicated header instance is marked invalid. 
+       It will not be available for matching in subsequent 
+       match+action stages. It will be ignored by the deparser. 
+       All field values in the header instance become uninitialized.
+    """
+    print "remove_header:",hdr_ref
+    hdr = p4.get_header_from_header_ref(hdr_ref)
+    if not hdr:
+        raise GP4_Exceptions.RuntimeError, "Tried to remove header %s but it is unknown." % hdr_ref_to_string(hdr_ref)
+
+    hdr.set_non_blocking_invalidate(p4)
     
     
 ## Built-in Action to copy a header

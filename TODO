@@ -1,3 +1,8 @@
+Test remove_header:
+1. make it valid and then invalid. Check it is invalid by testing invalidity and copy to another header?
+2. make it invalid when already invalid . Check it is invalid by testing invalidity and copy to another header?
+
+
 Check that hdrs and fields are updated correctly across multiple table activations.
 
 Implement the std action set.
